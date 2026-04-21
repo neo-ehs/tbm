@@ -76,51 +76,54 @@ textarea{resize:none;line-height:1.5}
 .gps-btn:hover{background:#0C447C}
 .gps-btn:disabled{background:#aaa;cursor:not-allowed}
 
-/* ===== 모바일 최적화 ===== */
-@media (max-width: 600px) {
-  .wrap{padding:0.5rem}
-  .doc-title{font-size:15px;padding:8px 0 3px}
-  .approval-box{min-width:52px;padding:3px 4px}
-  .approval-box .alabel{font-size:10px;margin-bottom:12px}
+/* ===== 위험요인 카드 (모바일/PC 공용) ===== */
+.risk-cards { margin-bottom:4px; }
+.risk-card { border:1px solid #ccc; border-radius:6px; margin-bottom:6px; overflow:hidden; }
+.risk-card-header { display:flex; align-items:center; gap:6px; background:#f5f5f5; padding:5px 8px; border-bottom:1px solid #eee; }
+.risk-card-num { font-size:11px; color:#888; min-width:18px; }
+.risk-card-body { display:grid; grid-template-columns:1fr 1fr; gap:0; }
+.risk-card-body .rf { padding:6px 8px; border-right:1px solid #eee; }
+.risk-card-body .rf:nth-child(2) { border-right:none; }
+.risk-card-full { padding:6px 8px; border-top:1px solid #eee; }
+.rf-label { font-size:10px; color:#888; font-weight:700; margin-bottom:2px; }
+.risk-card textarea, .risk-card input, .risk-card select { width:100%; border:none; background:transparent; font-size:12px; font-family:inherit; color:#222; outline:none; resize:none; }
+.risk-card textarea:focus, .risk-card input:focus { background:#EBF4FF; border-radius:2px; }
 
-  /* 모바일에서 복잡한 테이블은 카드형으로 */
+/* ===== 작업자 카드 ===== */
+.worker-card-wrap { margin-bottom:4px; }
+.worker-card { border:1px solid #ccc; border-radius:6px; margin-bottom:6px; overflow:hidden; }
+.worker-card-top { display:flex; align-items:center; gap:8px; padding:8px 10px; border-bottom:1px solid #eee; background:#fafafa; }
+.worker-card-name { font-size:14px; font-weight:700; flex:1; }
+.worker-card-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:0; }
+.worker-card-grid .wf { padding:5px 8px; border-right:1px solid #eee; border-top:1px solid #eee; }
+.worker-card-grid .wf:nth-child(3n) { border-right:none; }
+.wf-label { font-size:10px; color:#888; margin-bottom:1px; }
+.worker-card input[type=text] { width:100%; border:none; background:transparent; font-size:12px; font-family:inherit; color:#222; outline:none; }
+.worker-card input:focus { background:#EBF4FF; border-radius:2px; }
+
+/* PC에서는 기존 테이블도 유지 */
+.risk-table-wrap { display:none; }
+.risk-cards-wrap { display:block; }
+.workers-table-wrap { display:none; }
+.workers-cards-wrap { display:block; }
+
+@media (min-width:700px) {
+  .risk-table-wrap { display:block; }
+  .risk-cards-wrap { display:none; }
+  .workers-table-wrap { display:block; }
+  .workers-cards-wrap { display:none; }
+  .basic-table { display:table !important; }
+  .basic-mobile { display:none !important; }
+}
+@media (max-width:699px) {
+  .wrap { padding:0.5rem; }
+  .doc-title { font-size:15px; }
+  .approval-box { min-width:52px; }
   .form-table, .form-table tbody, .form-table tr, .form-table td, .form-table th { display:block; width:100%; }
-  .form-table tr { margin-bottom:2px; }
-  .form-table .th { text-align:left; padding:4px 8px; border-bottom:none; }
-  .form-table td { padding:4px 8px; }
-
-  /* 기본사항 — 모바일 전용 표시 (테이블 숨기고 카드로) */
+  .form-table .th { text-align:left; }
   .basic-table { display:none !important; }
   .basic-mobile { display:block !important; }
-
-  /* 체감온도 테이블 — 간소화 */
-  .temp-table thead { display:none; }
-  .temp-table tr { display:flex; gap:4px; padding:3px 0; border-bottom:1px solid #eee; }
-  .temp-table td { display:block; flex:1; border:none !important; padding:2px 4px !important; }
-  .temp-table td:first-child { display:none; }
-
-  /* 위험요인 테이블 — 카드형 */
-  .risk-table thead { display:none; }
-  .risk-table tr[id^="risk-row-"] { display:block; border:1px solid #ccc; border-radius:6px; margin-bottom:8px; padding:8px; }
-  .risk-table tr[id^="risk-row-"] td { display:block; border:none !important; padding:2px 0 !important; }
-  .risk-table tr[id^="risk-row-"] td.num-cell { display:none; }
-  .risk-table tr[id^="risk-row-"] td:nth-child(2)::before { content:"위험요인 "; font-size:10px; color:#888; font-weight:700; display:block; }
-  .risk-table tr[id^="risk-row-"] td:nth-child(3)::before { content:"재해유형 "; font-size:10px; color:#888; font-weight:700; }
-  .risk-table tr[id^="risk-row-"] td:nth-child(4)::before { content:"위험도 "; font-size:10px; color:#888; font-weight:700; }
-  .risk-table tr[id^="risk-row-"] td:nth-child(5)::before { content:"안전대책 "; font-size:10px; color:#888; font-weight:700; display:block; }
-  .risk-table tr[id^="risk-row-"] td:nth-child(3), .risk-table tr[id^="risk-row-"] td:nth-child(4) { display:inline-block; width:auto; margin-right:8px; }
-
-  /* 작업자 테이블 — 카드형 */
-  #workers-table thead { display:none; }
-  #workers-table tr.wrow { display:block; border:1px solid #ccc; border-radius:6px; margin-bottom:8px; padding:8px; }
-  #workers-table tr.wrow td { display:inline-block; border:none !important; padding:2px 4px !important; }
-  #workers-table tr.wrow td:nth-child(1) { display:none; }
-  #workers-table tr.wrow td:nth-child(2) { font-weight:700; font-size:14px; display:block; margin-bottom:4px; }
-  #workers-table tr.wrow td:nth-child(3) { display:block; margin-bottom:6px; }
-  #workers-table tr.wrow td:nth-child(n+4) { width:auto; font-size:11px; background:#f5f5f5; border-radius:3px; margin:2px; }
-
-  /* 버튼 풀너비 */
-  .load-btn { width:100%; justify-content:center; margin-top:6px; }
+  .load-btn { width:100%; justify-content:center; }
   .gps-btn { width:100%; justify-content:center; }
   .print-btn { width:100%; text-align:center; }
   .modal { width:calc(100vw - 32px); }
@@ -305,6 +308,8 @@ textarea{resize:none;line-height:1.5}
   </button>
 </div>
 
+<!-- PC용 위험요인 테이블 -->
+<div class="risk-table-wrap">
 <table class="risk-table" id="risk-table">
   <tr>
     <td class="rth" style="width:26px">번호</td>
@@ -319,11 +324,63 @@ textarea{resize:none;line-height:1.5}
   <tr id="risk-row-4"><td class="num-cell">4</td><td><textarea rows="2" placeholder="위험요인 입력"></textarea></td><td><input type="text" placeholder="유형"></td><td style="text-align:center"><select><option>상</option><option selected>중</option><option>하</option></select></td><td><textarea rows="2" placeholder="안전대책 입력"></textarea></td></tr>
   <tr id="risk-row-5"><td class="num-cell">5</td><td><textarea rows="2" placeholder="위험요인 입력"></textarea></td><td><input type="text" placeholder="유형"></td><td style="text-align:center"><select><option>상</option><option selected>중</option><option>하</option></select></td><td><textarea rows="2" placeholder="안전대책 입력"></textarea></td></tr>
 </table>
+</div>
+
+<!-- 모바일용 위험요인 카드 -->
+<div class="risk-cards-wrap" id="risk-cards">
+  <div class="risk-card" id="rcard-1">
+    <div class="risk-card-header"><span class="risk-card-num">1</span></div>
+    <div class="risk-card-full"><div class="rf-label">위험요인</div><textarea rows="2" placeholder="위험요인 입력"></textarea></div>
+    <div class="risk-card-body">
+      <div class="rf"><div class="rf-label">재해유형</div><input type="text" placeholder="유형"></div>
+      <div class="rf"><div class="rf-label">위험도</div><select><option>상</option><option selected>중</option><option>하</option></select></div>
+    </div>
+    <div class="risk-card-full"><div class="rf-label">안전대책</div><textarea rows="2" placeholder="안전대책 입력"></textarea></div>
+  </div>
+  <div class="risk-card" id="rcard-2">
+    <div class="risk-card-header"><span class="risk-card-num">2</span></div>
+    <div class="risk-card-full"><div class="rf-label">위험요인</div><textarea rows="2" placeholder="위험요인 입력"></textarea></div>
+    <div class="risk-card-body">
+      <div class="rf"><div class="rf-label">재해유형</div><input type="text" placeholder="유형"></div>
+      <div class="rf"><div class="rf-label">위험도</div><select><option>상</option><option selected>중</option><option>하</option></select></div>
+    </div>
+    <div class="risk-card-full"><div class="rf-label">안전대책</div><textarea rows="2" placeholder="안전대책 입력"></textarea></div>
+  </div>
+  <div class="risk-card" id="rcard-3">
+    <div class="risk-card-header"><span class="risk-card-num">3</span></div>
+    <div class="risk-card-full"><div class="rf-label">위험요인</div><textarea rows="2" placeholder="위험요인 입력"></textarea></div>
+    <div class="risk-card-body">
+      <div class="rf"><div class="rf-label">재해유형</div><input type="text" placeholder="유형"></div>
+      <div class="rf"><div class="rf-label">위험도</div><select><option>상</option><option selected>중</option><option>하</option></select></div>
+    </div>
+    <div class="risk-card-full"><div class="rf-label">안전대책</div><textarea rows="2" placeholder="안전대책 입력"></textarea></div>
+  </div>
+  <div class="risk-card" id="rcard-4">
+    <div class="risk-card-header"><span class="risk-card-num">4</span></div>
+    <div class="risk-card-full"><div class="rf-label">위험요인</div><textarea rows="2" placeholder="위험요인 입력"></textarea></div>
+    <div class="risk-card-body">
+      <div class="rf"><div class="rf-label">재해유형</div><input type="text" placeholder="유형"></div>
+      <div class="rf"><div class="rf-label">위험도</div><select><option>상</option><option selected>중</option><option>하</option></select></div>
+    </div>
+    <div class="risk-card-full"><div class="rf-label">안전대책</div><textarea rows="2" placeholder="안전대책 입력"></textarea></div>
+  </div>
+  <div class="risk-card" id="rcard-5">
+    <div class="risk-card-header"><span class="risk-card-num">5</span></div>
+    <div class="risk-card-full"><div class="rf-label">위험요인</div><textarea rows="2" placeholder="위험요인 입력"></textarea></div>
+    <div class="risk-card-body">
+      <div class="rf"><div class="rf-label">재해유형</div><input type="text" placeholder="유형"></div>
+      <div class="rf"><div class="rf-label">위험도</div><select><option>상</option><option selected>중</option><option>하</option></select></div>
+    </div>
+    <div class="risk-card-full"><div class="rf-label">안전대책</div><textarea rows="2" placeholder="안전대책 입력"></textarea></div>
+  </div>
+</div>
 <button class="add-row-btn" onclick="addRiskRow()">+ 위험요인 행 추가</button>
 
 <div class="sec-hdr" style="margin-top:8px">◆ 작업인원 명단 (철도종사자 작업 적합성 확인)</div>
 <div class="progress-summary" id="sig-summary">0 / 0 명 서명 완료</div>
 
+<!-- PC용 작업자 테이블 -->
+<div class="workers-table-wrap">
 <table class="form-table" id="workers-table">
   <tr>
     <td class="th" style="width:26px">번호</td>
@@ -337,6 +394,10 @@ textarea{resize:none;line-height:1.5}
     <td class="th">비고</td>
   </tr>
 </table>
+</div>
+
+<!-- 모바일용 작업자 카드 -->
+<div class="workers-cards-wrap" id="workers-cards"></div>
 <div style="display:flex;gap:6px;margin-top:6px;align-items:center">
   <input type="text" id="new-name" placeholder="성명" style="border:1px solid #ccc;border-radius:4px;padding:6px 10px;max-width:110px;font-family:inherit">
   <button class="add-row-btn" style="margin:0;padding:6px 14px;width:auto;border-style:solid" onclick="addWorker()">+ 작업자 추가</button>
@@ -695,21 +756,40 @@ function loadRisks() {
     });
   });
 
-  // 기존 행 제거 후 새로 채우기
+  // 기존 행/카드 제거 후 새로 채우기
   document.querySelectorAll('#risk-table tr[id^="risk-row-"]').forEach(r => r.remove());
+  document.querySelectorAll('#risk-cards .risk-card').forEach(r => r.remove());
   riskRowCount = 0;
+
   risks.forEach(r => {
     riskRowCount++;
-    const tbl = document.getElementById('risk-table');
-    const tr  = document.createElement('tr');
-    tr.id = 'risk-row-' + riskRowCount;
     const selOpts = ['상','중','하'].map(l => `<option${l===r.level?' selected':''}>${l}</option>`).join('');
+
+    // PC 테이블 행
+    const tbl = document.getElementById('risk-table');
+    const tr = document.createElement('tr');
+    tr.id = 'risk-row-' + riskRowCount;
     tr.innerHTML = `<td class="num-cell">${riskRowCount}</td>
       <td><textarea rows="2">${r.hazard}</textarea></td>
       <td><input type="text" value="${r.type}"></td>
       <td style="text-align:center"><select>${selOpts}</select></td>
       <td><textarea rows="2">${r.measure}</textarea></td>`;
     tbl.appendChild(tr);
+
+    // 모바일 카드
+    const cards = document.getElementById('risk-cards');
+    const card = document.createElement('div');
+    card.className = 'risk-card';
+    card.id = 'rcard-' + riskRowCount;
+    card.innerHTML = `
+      <div class="risk-card-header"><span class="risk-card-num">${riskRowCount}</span></div>
+      <div class="risk-card-full"><div class="rf-label">위험요인</div><textarea rows="2">${r.hazard}</textarea></div>
+      <div class="risk-card-body">
+        <div class="rf"><div class="rf-label">재해유형</div><input type="text" value="${r.type}"></div>
+        <div class="rf"><div class="rf-label">위험도</div><select>${selOpts}</select></div>
+      </div>
+      <div class="risk-card-full"><div class="rf-label">안전대책</div><textarea rows="2">${r.measure}</textarea></div>`;
+    cards.appendChild(card);
   });
 
   // 작업내용 자동 입력
@@ -720,11 +800,26 @@ function loadRisks() {
 
 function addRiskRow() {
   riskRowCount++;
+  // PC 테이블
   const tbl = document.getElementById('risk-table');
   const tr = document.createElement('tr');
   tr.id = 'risk-row-' + riskRowCount;
   tr.innerHTML = `<td class="num-cell">${riskRowCount}</td><td><textarea rows="2" placeholder="위험요인 입력"></textarea></td><td><input type="text" placeholder="유형"></td><td style="text-align:center"><select><option>상</option><option selected>중</option><option>하</option></select></td><td><textarea rows="2" placeholder="안전대책 입력"></textarea></td>`;
   tbl.appendChild(tr);
+  // 모바일 카드
+  const cards = document.getElementById('risk-cards');
+  const card = document.createElement('div');
+  card.className = 'risk-card';
+  card.id = 'rcard-' + riskRowCount;
+  card.innerHTML = `
+    <div class="risk-card-header"><span class="risk-card-num">${riskRowCount}</span></div>
+    <div class="risk-card-full"><div class="rf-label">위험요인</div><textarea rows="2" placeholder="위험요인 입력"></textarea></div>
+    <div class="risk-card-body">
+      <div class="rf"><div class="rf-label">재해유형</div><input type="text" placeholder="유형"></div>
+      <div class="rf"><div class="rf-label">위험도</div><select><option>상</option><option selected>중</option><option>하</option></select></div>
+    </div>
+    <div class="risk-card-full"><div class="rf-label">안전대책</div><textarea rows="2" placeholder="안전대책 입력"></textarea></div>`;
+  cards.appendChild(card);
 }
 
 // ===== 작업자 서명 =====
@@ -734,9 +829,15 @@ function updateSigSummary() {
 }
 
 function renderWorkers() {
+  // PC 테이블
   const tbl = document.getElementById('workers-table');
   tbl.querySelectorAll('tr.wrow').forEach(r => r.remove());
+  // 모바일 카드
+  const cards = document.getElementById('workers-cards');
+  cards.innerHTML = '';
+
   workers.forEach((w, i) => {
+    // PC 행
     const tr = document.createElement('tr');
     tr.className = 'wrow';
     tr.innerHTML = `
@@ -754,6 +855,31 @@ function renderWorkers() {
       inputs[fi].oninput = () => { workers[i][f] = inputs[fi].value; };
     });
     tbl.appendChild(tr);
+
+    // 모바일 카드
+    const card = document.createElement('div');
+    card.className = 'worker-card';
+    card.innerHTML = `
+      <div class="worker-card-top">
+        <span class="worker-card-name">${i+1}. ${w.name}</span>
+        ${w.signed
+          ? `<img src="${w.sigData}" style="height:32px;max-width:100px;object-fit:contain">`
+          : `<button onclick="openSigModal(${i})" style="padding:6px 14px;background:#185FA5;color:white;border:none;border-radius:4px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">✍️ 서명</button>`}
+      </div>
+      <div class="worker-card-grid">
+        <div class="wf"><div class="wf-label">음주</div><input type="text" value="${w.drink}" placeholder="정상"></div>
+        <div class="wf"><div class="wf-label">체온</div><input type="text" value="${w.temp}" placeholder="36.5"></div>
+        <div class="wf"><div class="wf-label">약물</div><input type="text" value="${w.drug}" placeholder="음성"></div>
+        <div class="wf"><div class="wf-label">질병/피로</div><input type="text" value="${w.fatigue}" placeholder="없음"></div>
+        <div class="wf"><div class="wf-label">안전장비</div><input type="text" value="${w.equipment}" placeholder="적합"></div>
+        <div class="wf"><div class="wf-label">비고</div><input type="text" value="${w.note}"></div>
+      </div>`;
+    // 카드 내 input 동기화
+    const cinputs = card.querySelectorAll('input[type=text]');
+    ['drink','temp','drug','fatigue','equipment','note'].forEach((f,fi) => {
+      cinputs[fi].oninput = () => { workers[i][f] = cinputs[fi].value; };
+    });
+    cards.appendChild(card);
   });
   updateSigSummary();
 }
