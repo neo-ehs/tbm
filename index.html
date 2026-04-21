@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>작업 전 안전교육 (TBM) 일지</title>
+<script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#222;font-size:13px;background:#f0f0f0}
@@ -417,24 +418,14 @@ async function fetchWeather() {
   }, {timeout: 10000});
 }
 
-// ===== SheetJS 미리 로드 (페이지 시작 시) =====
-const SHEETJS_CDN = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
-let XLSX = null;
-let xlsxReady = false;
-
-const xlsxScript = document.createElement('script');
-xlsxScript.src = SHEETJS_CDN;
-xlsxScript.onload = () => { XLSX = window.XLSX; xlsxReady = true; };
-xlsxScript.onerror = () => console.error('SheetJS 로드 실패');
-document.head.appendChild(xlsxScript);
-
+// ===== SheetJS (head에서 정적 로드됨) =====
 function waitForXLSX() {
   return new Promise((resolve, reject) => {
-    if (xlsxReady) { resolve(); return; }
+    if (window.XLSX) { resolve(); return; }
     let tries = 0;
     const timer = setInterval(() => {
-      if (xlsxReady) { clearInterval(timer); resolve(); }
-      else if (++tries > 50) { clearInterval(timer); reject(new Error('SheetJS 라이브러리 로드 실패. 네트워크를 확인해 주세요.')); }
+      if (window.XLSX) { clearInterval(timer); resolve(); }
+      else if (++tries > 30) { clearInterval(timer); reject(new Error('SheetJS 로드 실패. 네트워크를 확인해 주세요.')); }
     }, 200);
   });
 }
@@ -471,7 +462,7 @@ window.addEventListener('load', () => {
 
 // ===== 셀 값 읽기 유틸 =====
 function getCellVal(ws, col, row) {
-  const addr = XLSX.utils.encode_cell({c: col, r: row});
+  const addr = window.XLSX.utils.encode_cell({c: col, r: row});
   const cell = ws[addr];
   if (!cell) return '';
   const v = cell.v !== undefined ? cell.v : (cell.w || '');
@@ -480,14 +471,14 @@ function getCellVal(ws, col, row) {
 
 // ===== xlsx 한 파일 파싱 → 시트별 위험요인 추출 =====
 function parseXlsx(arrayBuffer, fileName) {
-  const wb = XLSX.read(arrayBuffer, {type:'array', cellFormula:true, sheetStubs:true});
+  const wb = window.XLSX.read(arrayBuffer, {type:'array', cellFormula:true, sheetStubs:true});
   const results = []; // [{sheetName, fileName, risks}]
 
   wb.SheetNames.forEach(sname => {
     if (SKIP_SHEETS.includes(sname.toLowerCase())) return;
     const ws = wb.Sheets[sname];
     if (!ws['!ref']) return;
-    const range = XLSX.utils.decode_range(ws['!ref']);
+    const range = window.XLSX.utils.decode_range(ws['!ref']);
     const risks = [];
 
     for (let r = 8; r <= range.e.r; r++) {
@@ -531,6 +522,7 @@ async function connectGitHub(silent = false) {
 
   try {
     await waitForXLSX();
+    console.log('connectGitHub: XLSX 준비됨', !!window.XLSX, typeof window.XLSX?.read);
 
     // 1. data/ 폴더 파일 목록
     const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/data`);
