@@ -431,12 +431,27 @@ function loadSheetJS() {
   });
 }
 
-// ===== GitHub 설정 =====
+// ===== 상수 =====
 const GH_STORAGE_KEY = 'tbm_gh_config';
-let ghOwner = '', ghRepo = '', ghFiles = []; // {name, download_url}
-let selectedFile = null;
+const SKIP_SHEETS = ['sheet1','데이터필드','data','summary','요약'];
+const TYPE_MAP = {
+  "떨어짐":"떨어짐","넘어짐":"넘어짐","깔림":"깔림","부딪힘":"부딪힘",
+  "맞음":"맞음","무너짐":"무너짐","끼임":"끼임","감전":"감전",
+  "폭발/화재":"폭발/화재","무리한 신체동작":"무리한 신체동작",
+  "화학물질 누출/접촉":"화학물질 누출/접촉","절단/베임/찔림":"절단/베임/찔림"
+};
 
-// 저장된 설정 복원
+// ===== 상태 =====
+let ghOwner = '', ghRepo = '';
+// sheetIndex: [{sheetName, fileName, risks:[]}]
+let sheetIndex = [];
+let selectedSheet = null; // sheetIndex의 항목
+let riskRowCount = 5;
+let workers = [], sigCtx, sigCanvas, isDrawing = false, currentIdx = null;
+
+document.getElementById('edu-date').value = new Date().toISOString().split('T')[0];
+
+// ===== 저장된 설정 복원 =====
 (function restoreConfig() {
   try {
     const c = JSON.parse(localStorage.getItem(GH_STORAGE_KEY)||'{}');
@@ -446,6 +461,57 @@ let selectedFile = null;
   } catch(e) {}
 })();
 
+// ===== 셀 값 읽기 유틸 =====
+function getCellVal(ws, col, row) {
+  const addr = XLSX.utils.encode_cell({c: col, r: row});
+  const cell = ws[addr];
+  if (!cell) return '';
+  const v = cell.v !== undefined ? cell.v : (cell.w || '');
+  return String(v).trim();
+}
+
+// ===== xlsx 한 파일 파싱 → 시트별 위험요인 추출 =====
+function parseXlsx(arrayBuffer, fileName) {
+  const wb = XLSX.read(arrayBuffer, {type:'array', cellFormula:true, sheetStubs:true});
+  const results = []; // [{sheetName, fileName, risks}]
+
+  wb.SheetNames.forEach(sname => {
+    if (SKIP_SHEETS.includes(sname.toLowerCase())) return;
+    const ws = wb.Sheets[sname];
+    if (!ws['!ref']) return;
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    const risks = [];
+
+    for (let r = 8; r <= range.e.r; r++) {
+      const hazard  = getCellVal(ws, 5,  r); // F열: 위험요인
+      const type    = getCellVal(ws, 9,  r); // J열: 재해유형
+      const measure = getCellVal(ws, 11, r); // L열: 예방대책
+      const sevRaw  = getCellVal(ws, 14, r); // O열: 강도
+
+      if (!hazard || hazard.length < 3) continue;
+      if (/^[=\[]/.test(hazard)) continue;
+      if (['작업절차','유해･위험','위험정보','예방대책'].some(h => hazard.startsWith(h))) continue;
+
+      let level = '중';
+      const sev = parseInt(sevRaw);
+      if (!isNaN(sev)) level = sev >= 3 ? '상' : sev <= 1 ? '하' : '중';
+
+      const h = hazard.replace(/\n/g,' ').replace(/\s+/g,' ');
+      const m = measure.replace(/\n/g,' ').replace(/\s+/g,' ');
+      if (!risks.find(x => x.hazard === h)) {
+        risks.push({hazard: h, type, measure: m, level});
+      }
+    }
+
+    if (risks.length > 0) {
+      results.push({sheetName: sname, fileName, risks});
+    }
+  });
+
+  return results;
+}
+
+// ===== GitHub 연결 — 파일 목록 조회 후 모든 xlsx 파싱 =====
 async function connectGitHub(silent = false) {
   const owner = document.getElementById('gh-owner').value.trim();
   const repo  = document.getElementById('gh-repo').value.trim();
@@ -453,37 +519,45 @@ async function connectGitHub(silent = false) {
   const searchInput = document.getElementById('work-search');
 
   if (!owner || !repo) { status.textContent = '⚠️ 사용자명과 저장소명을 모두 입력해 주세요.'; return; }
-
-  if (!silent) status.innerHTML = '<span style="color:#185FA5">🔄 연결 중...</span>';
+  status.innerHTML = '<span style="color:#185FA5">🔄 연결 중...</span>';
 
   try {
-    // GitHub API로 data/ 폴더 파일 목록 조회
+    await loadSheetJS();
+
+    // 1. data/ 폴더 파일 목록
     const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/data`);
     if (!res.ok) {
-      if (res.status === 404) throw new Error('저장소 또는 data 폴더를 찾을 수 없습니다. 저장소에 data 폴더를 만들어 주세요.');
-      throw new Error(`GitHub 응답 오류 (${res.status})`);
+      if (res.status === 404) throw new Error('저장소 또는 data 폴더를 찾을 수 없습니다.');
+      throw new Error(`GitHub 오류 (${res.status})`);
     }
-    const files = await res.json();
-    ghFiles = files.filter(f => f.type === 'file' && /\.(xlsx|xls)$/i.test(f.name));
+    const files = (await res.json()).filter(f => f.type === 'file' && /\.(xlsx|xls)$/i.test(f.name));
+    if (!files.length) throw new Error('data 폴더에 xlsx 파일이 없습니다.');
 
-    if (!ghFiles.length) {
-      status.innerHTML = '<span style="color:#a33">⚠️ data 폴더에 xlsx 파일이 없습니다.</span>';
-      return;
+    status.innerHTML = `<span style="color:#185FA5">🔄 xlsx ${files.length}개 파일 읽는 중...</span>`;
+
+    // 2. 모든 xlsx 다운로드 & 파싱
+    sheetIndex = [];
+    for (const f of files) {
+      const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/data/${f.name}`;
+      const fileRes = await fetch(rawUrl);
+      if (!fileRes.ok) continue;
+      const buf = await fileRes.arrayBuffer();
+      const parsed = parseXlsx(buf, f.name);
+      sheetIndex.push(...parsed);
     }
+
+    if (!sheetIndex.length) throw new Error('작업 시트에서 위험요인을 찾을 수 없습니다.');
 
     ghOwner = owner; ghRepo = repo;
     localStorage.setItem(GH_STORAGE_KEY, JSON.stringify({owner, repo}));
 
-    status.innerHTML = `<span style="color:#2d6a2d">✅ 연결됨 — xlsx 파일 ${ghFiles.length}개 확인</span>
-      <span style="color:#888;margin-left:8px">${ghFiles.map(f=>f.name).join(', ')}</span>`;
+    const totalSheets = sheetIndex.length;
+    const totalRisks  = sheetIndex.reduce((s,x) => s + x.risks.length, 0);
+    status.innerHTML = `<span style="color:#2d6a2d">✅ 연결됨 — 작업 ${totalSheets}개 / 위험요인 ${totalRisks}건 로드 완료</span>`;
     searchInput.disabled = false;
-    searchInput.placeholder = '작업명 또는 파일명 검색...';
-
-    if (!silent) {
-      // 연결 성공 시 설정 영역 접기
-      document.getElementById('gh-config-area').style.borderColor = '#90c890';
-      document.getElementById('gh-config-area').style.background = '#f0faf0';
-    }
+    searchInput.placeholder = '작업명 검색 (예: 집수정, 에어컨...)';
+    document.getElementById('gh-config-area').style.borderColor = '#90c890';
+    document.getElementById('gh-config-area').style.background = '#f0faf0';
 
   } catch(e) {
     status.innerHTML = `<span style="color:#a33">❌ ${e.message}</span>`;
@@ -491,48 +565,33 @@ async function connectGitHub(silent = false) {
   }
 }
 
-// ===== 검색 =====
-const TYPE_MAP = {
-  "떨어짐":"떨어짐","넘어짐":"넘어짐","깔림":"깔림","부딪힘":"부딪힘",
-  "맞음":"맞음","무너짐":"무너짐","끼임":"끼임","감전":"감전",
-  "폭발/화재":"폭발/화재","무리한 신체동작":"무리한 신체동작",
-  "화학물질 누출/접촉":"화학물질 누출/접촉","절단/베임/찔림":"절단/베임/찔림"
-};
-
-let selectedWork = null;
-let riskRowCount = 5;
-let workers = [], sigCtx, sigCanvas, isDrawing = false, currentIdx = null;
-
-document.getElementById('edu-date').value = new Date().toISOString().split('T')[0];
-
+// ===== 검색 — 시트명 기준 =====
 function onSearch(val) {
-  const dd = document.getElementById('search-dropdown');
+  const dd  = document.getElementById('search-dropdown');
   const btn = document.getElementById('load-btn');
-  const q = val.trim();
+  const q   = val.trim();
 
-  if (!q || !ghFiles.length) { dd.classList.remove('open'); btn.disabled = true; selectedFile = null; return; }
+  if (!q || !sheetIndex.length) { dd.classList.remove('open'); btn.disabled = true; selectedSheet = null; return; }
 
-  // 파일명(확장자 제거)으로 검색
-  const matches = ghFiles.filter(f => {
-    const name = f.name.replace(/\.(xlsx|xls)$/i, '');
-    return name.includes(q) || q.includes(name);
-  });
+  const matches = sheetIndex.filter(x => x.sheetName.includes(q));
 
   if (!matches.length) {
-    dd.innerHTML = '<div class="no-match">일치하는 파일이 없습니다.</div>';
-    dd.classList.add('open'); btn.disabled = true; selectedFile = null; return;
+    dd.innerHTML = '<div class="no-match">일치하는 작업명이 없습니다.</div>';
+    dd.classList.add('open'); btn.disabled = true; selectedSheet = null; return;
   }
 
-  dd.innerHTML = matches.map(f => {
-    const name = f.name.replace(/\.(xlsx|xls)$/i, '');
-    return `<div class="dropdown-item" onclick="selectFile('${f.name}', '${name}')">${name}<span class="cnt">xlsx</span></div>`;
-  }).join('');
+  dd.innerHTML = matches.map((x, i) =>
+    `<div class="dropdown-item" onclick="selectSheet(${sheetIndex.indexOf(x)})">
+      ${x.sheetName}
+      <span class="cnt">${x.risks.length}건 · ${x.fileName}</span>
+    </div>`
+  ).join('');
   dd.classList.add('open');
 }
 
-function selectFile(filename, displayName) {
-  selectedFile = ghFiles.find(f => f.name === filename);
-  document.getElementById('work-search').value = displayName;
+function selectSheet(idx) {
+  selectedSheet = sheetIndex[idx];
+  document.getElementById('work-search').value = selectedSheet.sheetName;
   document.getElementById('search-dropdown').classList.remove('open');
   document.getElementById('load-btn').disabled = false;
 }
@@ -541,92 +600,40 @@ document.addEventListener('click', e => {
   if (!e.target.closest('.search-box')) document.getElementById('search-dropdown').classList.remove('open');
 });
 
-// ===== GitHub에서 xlsx 다운로드 후 파싱 =====
-async function loadRisks() {
-  if (!selectedFile) return;
+// ===== 위험요인 테이블에 채우기 =====
+function loadRisks() {
+  if (!selectedSheet) return;
+  const risks = selectedSheet.risks;
 
-  const btn = document.getElementById('load-btn');
-  btn.disabled = true;
-  btn.innerHTML = '<div style="display:inline-flex;gap:3px"><span style="animation:ld .8s infinite both;width:5px;height:5px;background:#fff;border-radius:50%;display:inline-block"></span><span style="animation:ld .8s .15s infinite both;width:5px;height:5px;background:#fff;border-radius:50%;display:inline-block"></span><span style="animation:ld .8s .3s infinite both;width:5px;height:5px;background:#fff;border-radius:50%;display:inline-block"></span></div> 불러오는 중...';
-
-  try {
-    await loadSheetJS();
-
-    // GitHub raw 파일 다운로드 (CORS 우회: raw.githubusercontent.com)
-    const rawUrl = `https://raw.githubusercontent.com/${ghOwner}/${ghRepo}/main/data/${selectedFile.name}`;
-    const res = await fetch(rawUrl);
-    if (!res.ok) throw new Error('파일 다운로드 실패');
-
-    const arrayBuffer = await res.arrayBuffer();
-    const wb = XLSX.read(arrayBuffer, {type: 'array'});
-
-    // 작업 시트 파싱 (Sheet1, 데이터필드 제외)
-    const skipSheets = ['sheet1','데이터필드','data'];
-    const workSheets = wb.SheetNames.filter(n => !skipSheets.includes(n.toLowerCase()));
-
-    if (!workSheets.length) throw new Error('작업 시트를 찾을 수 없습니다.');
-
-    // 모든 시트에서 위험요인 수집
-    let allRisks = [];
-    workSheets.forEach(sname => {
-      const ws = wb.Sheets[sname];
-      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-      // 데이터는 9행(인덱스 8)부터: col5=위험요인, col9=재해유형, col11=예방대책, col14=강도
-      for (let i = 8; i < rows.length; i++) {
-        const row = rows[i];
-        const hazard = String(row[5]||'').trim();
-        const type   = String(row[9]||'').trim();
-        const measure= String(row[11]||'').trim().replace(/\n/g,' ');
-        const sev    = row[14];
-        if (!hazard || hazard.startsWith('=') || hazard.length < 3) continue;
-        let level = '중';
-        try { const s = parseInt(sev); level = s >= 3 ? '상' : s <= 1 ? '하' : '중'; } catch(e){}
-        // 중복 제거
-        if (!allRisks.find(r => r.hazard === hazard)) {
-          allRisks.push({hazard: hazard.replace(/\n/g,' '), type, measure, level});
-        }
-      }
+  // 위험예지 체크박스 초기화 & 자동 체크
+  document.querySelectorAll('#hazard-checks input[type=checkbox]').forEach(cb => cb.checked = false);
+  [...new Set(risks.map(r => r.type))].forEach(t => {
+    document.querySelectorAll('#hazard-checks input[type=checkbox]').forEach(cb => {
+      if (cb.dataset.label === TYPE_MAP[t]) cb.checked = true;
     });
+  });
 
-    if (!allRisks.length) throw new Error('위험요인 데이터를 찾을 수 없습니다. 파일 형식을 확인해 주세요.');
+  // 기존 행 제거 후 새로 채우기
+  document.querySelectorAll('#risk-table tr[id^="risk-row-"]').forEach(r => r.remove());
+  riskRowCount = 0;
+  risks.forEach(r => {
+    riskRowCount++;
+    const tbl = document.getElementById('risk-table');
+    const tr  = document.createElement('tr');
+    tr.id = 'risk-row-' + riskRowCount;
+    const selOpts = ['상','중','하'].map(l => `<option${l===r.level?' selected':''}>${l}</option>`).join('');
+    tr.innerHTML = `<td class="num-cell">${riskRowCount}</td>
+      <td><textarea rows="2">${r.hazard}</textarea></td>
+      <td><input type="text" value="${r.type}"></td>
+      <td style="text-align:center"><select>${selOpts}</select></td>
+      <td><textarea rows="2">${r.measure}</textarea></td>`;
+    tbl.appendChild(tr);
+  });
 
-    // 위험예지 체크박스 초기화 후 자동 체크
-    document.querySelectorAll('#hazard-checks input[type=checkbox]').forEach(cb => cb.checked = false);
-    const types = [...new Set(allRisks.map(r => r.type))];
-    types.forEach(t => {
-      document.querySelectorAll('#hazard-checks input[type=checkbox]').forEach(cb => {
-        if (cb.dataset.label && cb.dataset.label === TYPE_MAP[t]) cb.checked = true;
-      });
-    });
-
-    // 위험요인 테이블 채우기
-    document.querySelectorAll('#risk-table tr[id^="risk-row-"]').forEach(r => r.remove());
-    riskRowCount = 0;
-    allRisks.forEach(r => {
-      riskRowCount++;
-      const tbl = document.getElementById('risk-table');
-      const tr = document.createElement('tr');
-      tr.id = 'risk-row-' + riskRowCount;
-      const selOpts = ['상','중','하'].map(l => `<option${l===r.level?' selected':''}>${l}</option>`).join('');
-      tr.innerHTML = `<td class="num-cell">${riskRowCount}</td>
-        <td><textarea rows="2">${r.hazard}</textarea></td>
-        <td><input type="text" value="${r.type}"></td>
-        <td style="text-align:center"><select>${selOpts}</select></td>
-        <td><textarea rows="2">${r.measure}</textarea></td>`;
-      tbl.appendChild(tr);
-    });
-
-    // 작업내용 자동 입력
-    if (!document.getElementById('work-content').value) {
-      document.getElementById('work-content').value = selectedFile.name.replace(/\.(xlsx|xls)$/i,'');
-    }
-
-  } catch(e) {
-    alert('오류: ' + e.message);
+  // 작업내용 자동 입력
+  if (!document.getElementById('work-content').value) {
+    document.getElementById('work-content').value = selectedSheet.sheetName;
   }
-
-  btn.disabled = false;
-  btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 8h12M8 2l6 6-6 6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> 위험요인 불러오기';
 }
 
 function addRiskRow() {
