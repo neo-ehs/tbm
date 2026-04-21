@@ -417,17 +417,25 @@ async function fetchWeather() {
   }, {timeout: 10000});
 }
 
-// ===== SheetJS 로드 =====
+// ===== SheetJS 미리 로드 (페이지 시작 시) =====
 const SHEETJS_CDN = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
 let XLSX = null;
-function loadSheetJS() {
+let xlsxReady = false;
+
+const xlsxScript = document.createElement('script');
+xlsxScript.src = SHEETJS_CDN;
+xlsxScript.onload = () => { XLSX = window.XLSX; xlsxReady = true; };
+xlsxScript.onerror = () => console.error('SheetJS 로드 실패');
+document.head.appendChild(xlsxScript);
+
+function waitForXLSX() {
   return new Promise((resolve, reject) => {
-    if (XLSX) { resolve(XLSX); return; }
-    const s = document.createElement('script');
-    s.src = SHEETJS_CDN;
-    s.onload = () => { XLSX = window.XLSX; resolve(XLSX); };
-    s.onerror = reject;
-    document.head.appendChild(s);
+    if (xlsxReady) { resolve(); return; }
+    let tries = 0;
+    const timer = setInterval(() => {
+      if (xlsxReady) { clearInterval(timer); resolve(); }
+      else if (++tries > 50) { clearInterval(timer); reject(new Error('SheetJS 라이브러리 로드 실패. 네트워크를 확인해 주세요.')); }
+    }, 200);
   });
 }
 
@@ -451,15 +459,15 @@ let workers = [], sigCtx, sigCanvas, isDrawing = false, currentIdx = null;
 
 document.getElementById('edu-date').value = new Date().toISOString().split('T')[0];
 
-// ===== 저장된 설정 복원 =====
-(function restoreConfig() {
+// ===== 저장된 설정 복원 (페이지 로드 완료 후) =====
+window.addEventListener('load', () => {
   try {
     const c = JSON.parse(localStorage.getItem(GH_STORAGE_KEY)||'{}');
     if (c.owner) document.getElementById('gh-owner').value = c.owner;
     if (c.repo)  document.getElementById('gh-repo').value  = c.repo;
     if (c.owner && c.repo) connectGitHub(true);
   } catch(e) {}
-})();
+});
 
 // ===== 셀 값 읽기 유틸 =====
 function getCellVal(ws, col, row) {
@@ -522,7 +530,7 @@ async function connectGitHub(silent = false) {
   status.innerHTML = '<span style="color:#185FA5">🔄 연결 중...</span>';
 
   try {
-    await loadSheetJS();
+    await waitForXLSX();
 
     // 1. data/ 폴더 파일 목록
     const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/data`);
