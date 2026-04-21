@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>작업 전 안전교육 (TBM) 일지</title>
-<script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="./xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#222;font-size:13px;background:#f0f0f0}
@@ -75,6 +75,56 @@ textarea{resize:none;line-height:1.5}
 .gps-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#185FA5;color:white;border:none;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
 .gps-btn:hover{background:#0C447C}
 .gps-btn:disabled{background:#aaa;cursor:not-allowed}
+
+/* ===== 모바일 최적화 ===== */
+@media (max-width: 600px) {
+  .wrap{padding:0.5rem}
+  .doc-title{font-size:15px;padding:8px 0 3px}
+  .approval-box{min-width:52px;padding:3px 4px}
+  .approval-box .alabel{font-size:10px;margin-bottom:12px}
+
+  /* 모바일에서 복잡한 테이블은 카드형으로 */
+  .form-table, .form-table tbody, .form-table tr, .form-table td, .form-table th { display:block; width:100%; }
+  .form-table tr { margin-bottom:2px; }
+  .form-table .th { text-align:left; padding:4px 8px; border-bottom:none; }
+  .form-table td { padding:4px 8px; }
+
+  /* 기본사항 — 모바일 전용 표시 (테이블 숨기고 카드로) */
+  .basic-table { display:none !important; }
+  .basic-mobile { display:block !important; }
+
+  /* 체감온도 테이블 — 간소화 */
+  .temp-table thead { display:none; }
+  .temp-table tr { display:flex; gap:4px; padding:3px 0; border-bottom:1px solid #eee; }
+  .temp-table td { display:block; flex:1; border:none !important; padding:2px 4px !important; }
+  .temp-table td:first-child { display:none; }
+
+  /* 위험요인 테이블 — 카드형 */
+  .risk-table thead { display:none; }
+  .risk-table tr[id^="risk-row-"] { display:block; border:1px solid #ccc; border-radius:6px; margin-bottom:8px; padding:8px; }
+  .risk-table tr[id^="risk-row-"] td { display:block; border:none !important; padding:2px 0 !important; }
+  .risk-table tr[id^="risk-row-"] td.num-cell { display:none; }
+  .risk-table tr[id^="risk-row-"] td:nth-child(2)::before { content:"위험요인 "; font-size:10px; color:#888; font-weight:700; display:block; }
+  .risk-table tr[id^="risk-row-"] td:nth-child(3)::before { content:"재해유형 "; font-size:10px; color:#888; font-weight:700; }
+  .risk-table tr[id^="risk-row-"] td:nth-child(4)::before { content:"위험도 "; font-size:10px; color:#888; font-weight:700; }
+  .risk-table tr[id^="risk-row-"] td:nth-child(5)::before { content:"안전대책 "; font-size:10px; color:#888; font-weight:700; display:block; }
+  .risk-table tr[id^="risk-row-"] td:nth-child(3), .risk-table tr[id^="risk-row-"] td:nth-child(4) { display:inline-block; width:auto; margin-right:8px; }
+
+  /* 작업자 테이블 — 카드형 */
+  #workers-table thead { display:none; }
+  #workers-table tr.wrow { display:block; border:1px solid #ccc; border-radius:6px; margin-bottom:8px; padding:8px; }
+  #workers-table tr.wrow td { display:inline-block; border:none !important; padding:2px 4px !important; }
+  #workers-table tr.wrow td:nth-child(1) { display:none; }
+  #workers-table tr.wrow td:nth-child(2) { font-weight:700; font-size:14px; display:block; margin-bottom:4px; }
+  #workers-table tr.wrow td:nth-child(3) { display:block; margin-bottom:6px; }
+  #workers-table tr.wrow td:nth-child(n+4) { width:auto; font-size:11px; background:#f5f5f5; border-radius:3px; margin:2px; }
+
+  /* 버튼 풀너비 */
+  .load-btn { width:100%; justify-content:center; margin-top:6px; }
+  .gps-btn { width:100%; justify-content:center; }
+  .print-btn { width:100%; text-align:center; }
+  .modal { width:calc(100vw - 32px); }
+}
 </style>
 </head>
 <body>
@@ -123,7 +173,7 @@ textarea{resize:none;line-height:1.5}
   </tr>
 </table>
 
-<table class="form-table">
+<table class="form-table basic-table">
   <tr>
     <td class="th" rowspan="5" style="width:52px">기본사항</td>
     <td colspan="3" rowspan="5" style="font-size:12px;line-height:1.9;vertical-align:top;padding:7px">
@@ -143,6 +193,31 @@ textarea{resize:none;line-height:1.5}
   <tr><td></td><td><input type="text" placeholder="시각"></td><td><input type="text" placeholder="°C"></td><td><input type="text" placeholder="조치사항"></td></tr>
   <tr><td></td><td><input type="text" placeholder="시각"></td><td><input type="text" placeholder="°C"></td><td><input type="text" placeholder="조치사항"></td></tr>
 </table>
+
+<!-- 모바일 전용 기본사항 카드 -->
+<div class="basic-mobile" style="display:none;border:1px solid #999;border-radius:4px;margin-bottom:3px">
+  <div class="th" style="padding:5px 8px;border-radius:4px 4px 0 0;border-bottom:1px solid #999">기본사항</div>
+  <div style="padding:8px 10px;font-size:12px;line-height:2;background:#fafafa">
+    ① 개인 안전보호구 착용 확인<br>
+    ② 2인1조 작업 원칙 준수<br>
+    ③ 작업 위험사항 인지 (안전교육)<br>
+    ④ 작업 후 정리정돈 — 작업도구 및 반입자재 확인<br>
+    ⑤ 응급상황 발생 시 신속 보고
+  </div>
+  <div class="th" style="padding:5px 8px;border-top:1px solid #999;border-bottom:1px solid #999">작업 전 체감온도 확인</div>
+  <div style="padding:6px 8px">
+    <div style="display:flex;gap:6px;margin-bottom:4px">
+      <input type="text" id="w-time-1m" placeholder="시각" style="border:1px solid #ccc;border-radius:3px;padding:4px 6px;flex:1;font-size:12px">
+      <input type="text" id="w-temp-1m" placeholder="체감온도 °C" style="border:1px solid #ccc;border-radius:3px;padding:4px 6px;flex:2;font-size:12px">
+    </div>
+    <input type="text" id="w-measure-1m" placeholder="안전보건조치" style="border:1px solid #ccc;border-radius:3px;padding:4px 6px;width:100%;font-size:12px;margin-bottom:4px">
+    <div style="display:flex;gap:6px;margin-bottom:4px">
+      <input type="text" placeholder="시각" style="border:1px solid #ccc;border-radius:3px;padding:4px 6px;flex:1;font-size:12px">
+      <input type="text" placeholder="체감온도 °C" style="border:1px solid #ccc;border-radius:3px;padding:4px 6px;flex:2;font-size:12px">
+    </div>
+    <input type="text" placeholder="안전보건조치" style="border:1px solid #ccc;border-radius:3px;padding:4px 6px;width:100%;font-size:12px">
+  </div>
+</div>
 
 <table class="form-table">
   <tr>
@@ -386,10 +461,17 @@ async function fetchWeather() {
         </div>
         <span class="w-alert ${alert.cls}">${alert.text}</span>`;
 
-      // 체감온도 테이블 첫 행 자동 입력
+      // 체감온도 테이블 첫 행 자동 입력 (PC + 모바일)
       document.getElementById('w-time-1').value = timeStr;
       document.getElementById('w-temp-1').value = `${apparent}°C (기온 ${temp}°C, 습도 ${humidity}%, 풍속 ${wind}㎞/h)`;
       document.getElementById('w-measure-1').value = alert.text.replace(/[🚨⚠️🌡️✅🌨️]/g,'').trim();
+      // 모바일용
+      const m1 = document.getElementById('w-time-1m');
+      const m2 = document.getElementById('w-temp-1m');
+      const m3 = document.getElementById('w-measure-1m');
+      if(m1) m1.value = timeStr;
+      if(m2) m2.value = `${apparent}°C (기온 ${temp}°C, 습도 ${humidity}%, 풍속 ${wind}㎞/h)`;
+      if(m3) m3.value = alert.text.replace(/[🚨⚠️🌡️✅🌨️]/g,'').trim();
 
       // 폭염/한파 위험예지 자동 체크
       if (apparent >= 33) {
