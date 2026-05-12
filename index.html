@@ -643,7 +643,7 @@ function waitForXLSX() {
 }
 
 const GH_STORAGE_KEY = 'tbm_gh_config';
-const SKIP_SHEETS    = ['sheet1','데이터필드','data','summary','요약'];
+const SKIP_SHEETS    = ['sheet1','데이터필드','data','summary','요약','갑지','위험성평가 대상작업목록(시설물 점검 및 보수)','위험성평가 대상작업목록 외주업체작업'];
 const TYPE_MAP = {
   "떨어짐":"떨어짐","넘어짐":"넘어짐","깔림":"깔림","부딪힘":"부딪힘",
   "맞음":"맞음","무너짐":"무너짐","끼임":"끼임","감전":"감전",
@@ -674,26 +674,76 @@ function getCellVal(ws, col, row) {
   return String(cell.v !== undefined ? cell.v : (cell.w || '')).trim();
 }
 
+// 헤더 키워드 → 열 인덱스 자동 감지
+// 양식이 바뀌어도 키워드만 있으면 자동으로 맞춰서 파싱
+const COL_KEYWORDS = {
+  hazard:  ['유해', '위험요인', '유해･위험'],
+  type:    ['재해유형'],
+  measure: ['예방대책', '안전·보건조치', '안전보건조치'],
+  sev:     ['강도'],
+};
+
+function detectColumns(ws, range) {
+  const cols = {hazard:-1, type:-1, measure:-1, sev:-1};
+  // 1~10행 내에서 헤더 키워드 탐색
+  for (let r = 0; r <= Math.min(9, range.e.r); r++) {
+    for (let c = 0; c <= range.e.c; c++) {
+      const val = getCellVal(ws, c, r);
+      if (!val) continue;
+      for (const [key, keywords] of Object.entries(COL_KEYWORDS)) {
+        if (cols[key] === -1 && keywords.some(kw => val.includes(kw))) {
+          cols[key] = c;
+        }
+      }
+    }
+  }
+  // 강도 열이 두 개(현재/감소대책) 있으면 첫 번째만 사용 — 이미 첫 발견 시 고정됨
+  return cols;
+}
+
+function findDataStartRow(ws, range, cols) {
+  // 헤더 다음 행부터 위험요인 데이터가 시작하는 행 탐색 (최대 15행까지)
+  for (let r = 5; r <= Math.min(15, range.e.r); r++) {
+    const val = getCellVal(ws, cols.hazard, r);
+    if (val && val.length >= 3 && !/작업절차|유해|위험정보|예방대책/.test(val) && !/^[=\[]/.test(val)) {
+      return r;
+    }
+  }
+  return 8; // 감지 실패 시 기본값
+}
+
 function parseXlsx(arrayBuffer, fileName) {
   const wb      = window.XLSX.read(arrayBuffer, {type:'array', cellFormula:true, sheetStubs:true});
   const results = [];
 
   wb.SheetNames.forEach(sname => {
-    if (SKIP_SHEETS.includes(sname.toLowerCase())) return;
+    const sLower = sname.toLowerCase().trim();
+    const skip = SKIP_SHEETS.some(s => sLower === s.toLowerCase()) ||
+                 /대상작업목록|갑지|summary|요약/.test(sname);
+    if (skip) return;
+
     const ws = wb.Sheets[sname];
     if (!ws['!ref']) return;
     const range = window.XLSX.utils.decode_range(ws['!ref']);
-    const risks = [];
 
-    for (let r = 8; r <= range.e.r; r++) {
-      const hazard  = getCellVal(ws, 5,  r);
-      const type    = getCellVal(ws, 9,  r);
-      const measure = getCellVal(ws, 11, r);
-      const sevRaw  = getCellVal(ws, 14, r);
+    // 열 자동 감지 → 실패 시 기본값(이전 방식) 폴백
+    const cols = detectColumns(ws, range);
+    const cHazard  = cols.hazard  !== -1 ? cols.hazard  : 5;
+    const cType    = cols.type    !== -1 ? cols.type    : 9;
+    const cMeasure = cols.measure !== -1 ? cols.measure : 11;
+    const cSev     = cols.sev     !== -1 ? cols.sev     : 14;
+    const dataStart = findDataStartRow(ws, range, {hazard: cHazard});
+
+    const risks = [];
+    for (let r = dataStart; r <= range.e.r; r++) {
+      const hazard  = getCellVal(ws, cHazard,  r);
+      const type    = getCellVal(ws, cType,    r);
+      const measure = getCellVal(ws, cMeasure, r);
+      const sevRaw  = getCellVal(ws, cSev,     r);
 
       if (!hazard || hazard.length < 3) continue;
       if (/^[=\[]/.test(hazard)) continue;
-      if (['작업절차','유해･위험','위험정보','예방대책'].some(h => hazard.startsWith(h))) continue;
+      if (/작업절차|유해･위험|위험정보|예방대책/.test(hazard)) continue;
 
       const sev   = parseInt(sevRaw);
       const level = !isNaN(sev) ? (sev >= 3 ? '상' : sev <= 1 ? '하' : '중') : '중';
@@ -703,7 +753,7 @@ function parseXlsx(arrayBuffer, fileName) {
       if (!risks.find(x => x.hazard === h)) risks.push({hazard: h, type, measure: m, level});
     }
 
-    if (risks.length > 0) results.push({sheetName: sname, fileName, risks});
+    if (risks.length > 0) results.push({sheetName: sname.trim(), fileName, risks});
   });
 
   return results;
