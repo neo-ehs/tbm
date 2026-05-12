@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>작업 전 안전교육 (TBM) 일지</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#222;font-size:13px;background:#f0f0f0}
+.wrap{max-width:920px;margin:0 auto;padding:1rem;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,0.08)}
+.doc-title{text-align:center;font-size:18px;font-weight:700;padding:12px 0 4px;border-bottom:2.5px solid #222;margin-bottom:0}
+.approval-row{display:flex;justify-content:flex-end}
+.approval-box{border:1px solid #999;text-align:center;min-width:72px;padding:4px 8px}
+.approval-box .alabel{font-size:11px;color:#555;border-bottom:1px solid #ddd;padding-bottom:3px;margin-bottom:18px}
+.form-table{width:100%;border-collapse:collapse;margin-bottom:3px}
+.form-table td,.form-table th{border:1px solid #999;padding:5px 7px;vertical-align:middle}
+.th{background:#ebebeb;font-weight:700;font-size:12px;white-space:nowrap;text-align:center}
+.sec-hdr{background:#d8d8d8;font-weight:700;font-size:12px;padding:5px 10px;border:1px solid #999;border-bottom:none;margin-top:5px}
+input[type=text],input[type=date],textarea,select{width:100%;border:none;background:transparent;font-size:12px;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#222;padding:1px 3px;outline:none}
+input:focus,textarea:focus{background:#EBF4FF;border-radius:2px}
+textarea{resize:none;line-height:1.5}
+.cb-row{display:flex;flex-wrap:wrap;gap:3px 10px;font-size:11px;line-height:1.7}
+.cb-row label{display:flex;align-items:center;gap:3px;cursor:pointer}
+.cb-row input[type=checkbox]{width:auto;cursor:pointer}
+.search-box{position:relative;margin:4px 0}
+.search-box input{border:1px solid #bbb;border-radius:4px;padding:8px 12px;font-size:13px;width:100%;font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif}
+.search-box input:focus{border-color:#185FA5;outline:none;background:#EBF4FF}
+.dropdown{display:none;position:absolute;top:100%;left:0;right:0;z-index:50;background:#fff;border:1px solid #bbb;border-top:none;border-radius:0 0 4px 4px;max-height:200px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+.dropdown.open{display:block}
+.dropdown-item{padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:0.5px solid #f0f0f0;font-family:'Malgun Gothic',sans-serif}
+.dropdown-item:hover{background:#EBF4FF}
+.dropdown-item .cnt{font-size:11px;color:#888;float:right}
+.no-match{padding:8px 12px;font-size:12px;color:#999}
+.load-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#185FA5;color:white;border:none;border-radius:4px;font-size:13px;font-weight:700;cursor:pointer;margin-top:4px;font-family:'Malgun Gothic',sans-serif}
+.load-btn:hover{background:#0C447C}
+.load-btn:disabled{background:#ccc;cursor:not-allowed}
+.risk-table{width:100%;border-collapse:collapse;margin-bottom:2px}
+.risk-table td,.risk-table th{border:1px solid #999;padding:5px 6px;vertical-align:top}
+.rth{background:#ebebeb;font-weight:700;font-size:12px;text-align:center}
+.num-cell{text-align:center;color:#888;width:26px;vertical-align:middle!important}
+.add-row-btn{width:100%;padding:5px;border:1px dashed #aaa;background:transparent;cursor:pointer;color:#888;font-size:12px;border-radius:3px;margin-top:2px;font-family:inherit}
+.add-row-btn:hover{background:#f5f5f5}
+.sig-thumb{height:28px;max-width:100%;object-fit:contain;display:block}
+.progress-summary{font-size:11px;color:#888;text-align:right;padding:2px 0}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:200;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:8px;padding:1.25rem;width:340px;border:1px solid #ccc;box-shadow:0 4px 24px rgba(0,0,0,0.18)}
+.modal h3{font-size:14px;font-weight:700;margin-bottom:10px}
+.sig-canvas{width:100%;height:80px;border:1px dashed #aaa;border-radius:4px;display:block;cursor:crosshair;touch-action:none;background:#fafafa}
+.modal-btns{display:flex;gap:6px;margin-top:10px}
+.modal-btns button{flex:1;padding:8px;border-radius:4px;font-size:12px;cursor:pointer;font-family:inherit}
+.btn-cancel{background:#f0f0f0;border:1px solid #ccc;color:#333}
+.btn-ok{background:#185FA5;color:white;border:none;font-weight:700}
+.print-area{display:flex;justify-content:flex-end;margin-top:12px}
+.print-btn{padding:9px 20px;border:1px solid #999;border-radius:4px;font-size:13px;background:#fff;cursor:pointer;color:#333;font-family:inherit;font-weight:600}
+.print-btn:hover{background:#f0f0f0}
+.tag{display:inline-block;background:#e8f4e8;color:#2d6a2d;font-size:10px;padding:1px 7px;border-radius:10px;margin-left:5px;vertical-align:middle;font-weight:600}
+/* 날씨 */
+.weather-bar{border:1px solid #999;border-radius:4px;padding:8px 12px;margin:5px 0;background:#f7fbff;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.weather-bar.loading{color:#888;font-size:12px;justify-content:center}
+.weather-bar.error{background:#fff7f7;border-color:#e8b0b0;color:#a33;font-size:12px;justify-content:center}
+.w-icon{font-size:22px;line-height:1}
+.w-info{display:flex;flex-wrap:wrap;gap:6px 14px;flex:1}
+.w-item{display:flex;flex-direction:column;align-items:center;min-width:60px}
+.w-label{font-size:10px;color:#777}
+.w-val{font-size:13px;font-weight:700;color:#185FA5}
+.w-alert{font-size:11px;padding:3px 8px;border-radius:3px;font-weight:600}
+.w-alert.danger{background:#E82A2A;color:#fff}
+.w-alert.hot{background:#FF8C00;color:#fff}
+.w-alert.warn{background:#FFD700;color:#333}
+.w-alert.normal{background:#00BFFF;color:#fff}
+.w-alert.cold{background:#cce5ff;color:#004085}
+.w-alert.safe{background:#d4edda;color:#155724}
+.gps-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#185FA5;color:white;border:none;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
+.gps-btn:hover{background:#0C447C}
+.gps-btn:disabled{background:#aaa;cursor:not-allowed}
+/* 위험요인 카드 */
+.risk-card{border:1px solid #ccc;border-radius:6px;margin-bottom:6px;overflow:hidden}
+.risk-card-header{display:flex;align-items:center;gap:6px;background:#f5f5f5;padding:5px 8px;border-bottom:1px solid #eee}
+.risk-card-num{font-size:11px;color:#888;min-width:18px}
+.risk-card-body{display:grid;grid-template-columns:1fr 1fr}
+.risk-card-body .rf{padding:6px 8px;border-right:1px solid #eee}
+.risk-card-body .rf:nth-child(2){border-right:none}
+.risk-card-full{padding:6px 8px;border-top:1px solid #eee}
+.rf-label{font-size:10px;color:#888;font-weight:700;margin-bottom:2px}
+.risk-card textarea,.risk-card input,.risk-card select{width:100%;border:none;background:transparent;font-size:12px;font-family:inherit;color:#222;outline:none;resize:none}
+.risk-card textarea:focus,.risk-card input:focus{background:#EBF4FF;border-radius:2px}
+/* 작업자 카드 */
+.worker-card{border:1px solid #ccc;border-radius:6px;margin-bottom:6px;overflow:hidden}
+.worker-card-top{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid #eee;background:#fafafa}
+.worker-card-name{font-size:14px;font-weight:700;flex:1}
+.worker-card-grid{display:grid;grid-template-columns:repeat(3,1fr)}
+.worker-card-grid .wf{padding:5px 8px;border-right:1px solid #eee;border-top:1px solid #eee}
+.worker-card-grid .wf:nth-child(3n){border-right:none}
+.wf-label{font-size:10px;color:#888;margin-bottom:1px}
+.worker-card input[type=text]{width:100%;border:none;background:transparent;font-size:12px;font-family:inherit;color:#222;outline:none}
+.worker-card input:focus{background:#EBF4FF;border-radius:2px}
+/* 반응형 */
+.risk-table-wrap{display:none}
+.risk-cards-wrap{display:block}
+.workers-table-wrap{display:none}
+.workers-cards-wrap{display:block}
+@media(min-width:700px){
+  .risk-table-wrap{display:block}
+  .risk-cards-wrap{display:none}
+  .workers-table-wrap{display:block}
+  .workers-cards-wrap{display:none}
+  .basic-table{display:table!important}
+  .basic-mobile{display:none!important}
+}
+@media(max-width:699px){
+  .wrap{padding:0.5rem}
+  .doc-title{font-size:15px}
+  .approval-box{min-width:52px}
+  .form-table,.form-table tbody,.form-table tr,.form-table td,.form-table th{display:block;width:100%}
+  .form-table .th{text-align:left}
+  .basic-table{display:none!important}
+  .basic-mobile{display:block!important}
+  .load-btn,.gps-btn,.print-btn{width:100%;justify-content:center;text-align:center}
+  .modal{width:calc(100vw - 32px)}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="approval-row">
+  <div class="approval-box"><div class="alabel">결재</div></div>
+  <div class="approval-box"><div class="alabel">담당</div></div>
+  <div class="approval-box"><div class="alabel">관리책임자</div></div>
+</div>
+<div class="doc-title">작업 전 안전교육 (위험예지훈련/TBM)</div>
+
+<table class="form-table" style="margin-top:6px">
+  <tr>
+    <td class="th" style="width:55px">업체명</td>
+    <td><input type="text" id="company" placeholder="업체명"></td>
+    <td class="th" style="width:40px">일시</td>
+    <td><input type="date" id="edu-date">&nbsp;<input type="text" id="edu-time" placeholder="00시 00분" style="width:80px"></td>
+    <td rowspan="1" style="width:110px;padding:5px 6px;vertical-align:top">
+      <div style="font-size:10px;font-weight:700;color:#185FA5;text-align:center;margin-bottom:4px">체감온도 계산기</div>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;align-items:center;gap:3px">
+          <label style="font-size:10px;color:#555;white-space:nowrap;width:28px">기온</label>
+          <input type="number" id="calc-temp" placeholder="°C" step="0.1"
+            style="border:1px solid #ccc;border-radius:3px;padding:2px 4px;font-size:11px;width:100%;text-align:right"
+            oninput="calcFeelsLikeUI()">
+        </div>
+        <div style="display:flex;align-items:center;gap:3px">
+          <label style="font-size:10px;color:#555;white-space:nowrap;width:28px">습도</label>
+          <input type="number" id="calc-hum" placeholder="%" min="0" max="100"
+            style="border:1px solid #ccc;border-radius:3px;padding:2px 4px;font-size:11px;width:100%;text-align:right"
+            oninput="calcFeelsLikeUI()">
+        </div>
+        <div id="calc-result" style="display:none;margin-top:2px;padding:3px 5px;border-radius:3px;text-align:center;font-size:11px;font-weight:700;background:#EBF4FF;color:#185FA5">
+          체감 <span id="calc-result-val"></span>°C
+        </div>
+        <div id="calc-alert" style="display:none;font-size:10px;font-weight:600;text-align:center;padding:2px 4px;border-radius:3px"></div>
+      </div>
+    </td>
+  </tr>
+</table>
+
+<div style="margin:6px 0 3px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+  <span style="font-size:12px;color:#555;font-weight:600">현재 날씨 (GPS 자동 측정)</span>
+  <button class="gps-btn" id="gps-btn" onclick="fetchWeather()">📍 위치 기반 날씨 불러오기</button>
+  <span id="gps-location" style="font-size:11px;color:#888"></span>
+</div>
+<div id="weather-bar" class="weather-bar loading" style="display:none">날씨 정보를 불러오는 중...</div>
+
+<div class="sec-hdr">◆ 작업개요</div>
+<table class="form-table">
+  <tr>
+    <td class="th" style="width:72px">작업내용<br>(승인번호)</td>
+    <td colspan="3"><textarea id="work-content" rows="2" placeholder="작업내용 및 승인번호"></textarea></td>
+    <td class="th" style="width:72px">작업책임자</td>
+    <td colspan="2"><input type="text" id="work-manager" placeholder="성명"></td>
+  </tr>
+  <tr>
+    <td class="th">작업장소</td>
+    <td colspan="3"><input type="text" id="work-place" placeholder="작업장소"></td>
+    <td class="th" style="font-size:11px">철도운행안전관리자<br>(안전담당자)</td>
+    <td colspan="2"><input type="text" id="safety-manager" placeholder="성명"></td>
+  </tr>
+</table>
+
+<table class="form-table basic-table">
+  <tr>
+    <td class="th" rowspan="5" style="width:52px">기본사항</td>
+    <td colspan="3" rowspan="5" style="font-size:12px;line-height:1.9;vertical-align:top;padding:7px">
+      ① 개인 안전보호구 착용 확인<br>
+      ② 2인1조 작업 원칙 준수<br>
+      ③ 작업 위험사항 인지 (안전교육)<br>
+      ④ 작업 후 정리정돈 — 작업도구 및 반입자재 확인<br>
+      ⑤ 응급상황 발생 시 신속 보고
+    </td>
+    <td class="th" style="width:80px">작업 전 체감온도 확인</td>
+    <td class="th" style="width:66px">측정시간</td>
+    <td class="th" style="width:66px">체감온도</td>
+    <td class="th">안전보건조치</td>
+  </tr>
+  <tr><td></td><td><input type="text" id="w-time-1" placeholder="시각"></td><td><input type="text" id="w-temp-1" placeholder="°C"></td><td><input type="text" id="w-measure-1" placeholder="조치사항"></td></tr>
+  <tr><td></td><td><input type="text" placeholder="시각"></td><td><input type="text" placeholder="°C"></td><td><input type="text" placeholder="조치사항"></td></tr>
+  <tr><td></td><td><input type="text" placeholder="시각"></td><td><input type="text" placeholder="°C"></td><td><input type="text" placeholder="조치사항"></td></tr>
+  <tr><td></td><td><input type="text" placeholder="시각"></td><td><input type="text" placeholder="°C"></td><td><input type="text" placeholder="조치사항"></td></tr>
+</table>
+
+<div class="basic-mobile" style="display:none;border:1px solid #999;border-radius:4px;margin-bottom:3px">
+  <div class="th" style="padding:5px 8px;border-radius:4px 4px 0 0;border-bottom:1px solid #999">기본사항</div>
+  <div style="padding:8px 10px;font-size:12px;line-height:2;background:#fafafa">
+    ① 개인 안전보호구 착용 확인<br>
+    ② 2인1조 작업 원칙 준수<br>
+    ③ 작업 위험사항 인지 (안전교육)<br>
+    ④ 작업 후 정리정돈 — 작업도구 및 반입자재 확인<br>
+    ⑤ 응급상황 발생 시 신속 보고
+  </div>
+  <div class="th" style="padding:5px 8px;border-top:1px solid #999;border-bottom:1px solid #999">작업 전 체감온도 확인</div>
+  <div style="padding:6px 8px">
+    <div style="display:flex;gap:6px;margin-bottom:4px">
+      <input type="text" id="w-time-1m" placeholder="시각" style="border:1px solid #ccc;border-radius:3px;padding:4px 6px;flex:1;font-size:12px">
+      <input type="text" id="w-temp-1m" placeholder="체감온도 °C" style="border:1px solid #ccc;border-radius:3px;padding:4px 6px;flex:2;font-size:12px">
+    </div>
+    <input type="text" id="w-measure-1m" placeholder="안전보건조치" style="border:1px solid #ccc;border-radius:3px;padding:4px 6px;width:100%;font-size:12px;margin-bottom:4px">
+    <div style="display:flex;gap:6px;margin-bottom:4px">
+      <input type="text" placeholder="시각" style="border:1px solid #ccc;border-radius:3px;padding:4px 6px;flex:1;font-size:12px">
+      <input type="text" placeholder="체감온도 °C" style="border:1px solid #ccc;border-radius:3px;padding:4px 6px;flex:2;font-size:12px">
+    </div>
+    <input type="text" placeholder="안전보건조치" style="border:1px solid #ccc;border-radius:3px;padding:4px 6px;width:100%;font-size:12px">
+  </div>
+</div>
+
+<table class="form-table">
+  <tr>
+    <td class="th" style="width:52px">위험예지</td>
+    <td>
+      <div class="cb-row" id="hazard-checks">
+        <label><input type="checkbox" data-label="떨어짐"> 떨어짐</label>
+        <label><input type="checkbox" data-label="넘어짐"> 넘어짐</label>
+        <label><input type="checkbox" data-label="깔림"> 깔림</label>
+        <label><input type="checkbox" data-label="부딪힘"> 부딪힘</label>
+        <label><input type="checkbox" data-label="맞음"> 맞음</label>
+        <label><input type="checkbox" data-label="무너짐"> 무너짐</label>
+        <label><input type="checkbox" data-label="끼임"> 끼임</label>
+        <label><input type="checkbox" data-label="절단/베임/찔림"> 절단·베임·찔림</label>
+        <label><input type="checkbox" data-label="감전"> 감전</label>
+        <label><input type="checkbox" data-label="폭발/화재"> 폭발·파열</label>
+        <label><input type="checkbox" data-label="무리한 신체동작"> 불균형·무리한 동작</label>
+        <label><input type="checkbox" data-label="화학물질 누출/접촉"> 화학물질 누출·접촉</label>
+        <label><input type="checkbox" data-label="산소결핍"> 산소결핍</label>
+        <label><input type="checkbox" data-label="폭염"> 폭염</label>
+        <label><input type="checkbox" data-label="한파"> 한파</label>
+        <span style="display:flex;align-items:center;gap:4px;font-size:11px">기타:<input type="text" id="hazard-etc" style="width:130px;border-bottom:1px solid #ccc" placeholder="직접 입력"></span>
+      </div>
+    </td>
+  </tr>
+</table>
+
+<table class="form-table">
+  <tr>
+    <td class="th" style="width:52px">보호구</td>
+    <td>
+      <div class="cb-row" id="ppe-checks">
+        <label><input type="checkbox" checked> 안전모</label>
+        <label><input type="checkbox" checked> 안전화</label>
+        <label><input type="checkbox" checked> 안전벨트</label>
+        <label><input type="checkbox"> 활선경보기</label>
+        <label><input type="checkbox"> 방진마스크</label>
+        <label><input type="checkbox"> 절연장갑</label>
+        <label><input type="checkbox"> 귀마개</label>
+        <label><input type="checkbox"> 절연장화</label>
+        <label><input type="checkbox"> 각반</label>
+        <label><input type="checkbox"> 랜턴</label>
+        <label><input type="checkbox"> 안전조끼</label>
+        <span style="display:flex;align-items:center;gap:4px;font-size:11px">기타:<input type="text" id="ppe-etc" style="width:110px;border-bottom:1px solid #ccc" placeholder="직접 입력"></span>
+      </div>
+    </td>
+  </tr>
+</table>
+
+<div class="sec-hdr" style="margin-top:5px">◆ 교육내용</div>
+
+<div style="margin:6px 0 4px">
+  <div id="gh-config-area" style="background:#f7fbff;border:1px solid #b8d4ee;border-radius:4px;padding:8px 10px;margin-bottom:8px">
+    <div style="font-size:12px;font-weight:700;color:#185FA5;margin-bottom:6px">
+      📁 GitHub 위험성평가표 연동
+      <span class="tag">무료 — API키 불필요</span>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end">
+      <div style="flex:1;min-width:160px">
+        <div style="font-size:11px;color:#666;margin-bottom:2px">GitHub 사용자명</div>
+        <input type="text" id="gh-owner" placeholder="예: myusername" style="border:1px solid #ccc;border-radius:3px;padding:5px 8px;font-size:12px">
+      </div>
+      <div style="flex:1;min-width:160px">
+        <div style="font-size:11px;color:#666;margin-bottom:2px">저장소명</div>
+        <input type="text" id="gh-repo" placeholder="예: tbm-safety-log" style="border:1px solid #ccc;border-radius:3px;padding:5px 8px;font-size:12px">
+      </div>
+      <div>
+        <button class="load-btn" style="margin:0;padding:7px 12px;font-size:12px" onclick="connectGitHub()">🔗 연결</button>
+      </div>
+    </div>
+    <div id="gh-status" style="font-size:11px;margin-top:5px;color:#888"></div>
+  </div>
+
+  <div style="font-size:12px;color:#555;margin-bottom:4px">위험성평가표 파일 검색</div>
+  <div class="search-box">
+    <input type="text" id="work-search" placeholder="작업명 검색 (GitHub 연결 후 사용 가능)" autocomplete="off" oninput="onSearch(this.value)" onfocus="onSearch(this.value)" disabled>
+    <div class="dropdown" id="search-dropdown"></div>
+  </div>
+  <button class="load-btn" id="load-btn" onclick="loadRisks()" disabled>
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 8h12M8 2l6 6-6 6" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    위험요인 불러오기
+  </button>
+</div>
+
+<!-- PC용 위험요인 테이블 -->
+<div class="risk-table-wrap">
+  <table class="risk-table" id="risk-table">
+    <tr>
+      <td class="rth" style="width:26px">번호</td>
+      <td class="rth">해당 작업의 예상 위험요인</td>
+      <td class="rth" style="width:76px">재해유형</td>
+      <td class="rth" style="width:42px">위험도</td>
+      <td class="rth">안전수칙, 주의사항 등 안전대책</td>
+    </tr>
+    <tr id="risk-row-1"><td class="num-cell">1</td><td><textarea rows="2" placeholder="위험요인 입력"></textarea></td><td><input type="text" placeholder="유형"></td><td style="text-align:center"><select><option>상</option><option selected>중</option><option>하</option></select></td><td><textarea rows="2" placeholder="안전대책 입력"></textarea></td></tr>
+    <tr id="risk-row-2"><td class="num-cell">2</td><td><textarea rows="2" placeholder="위험요인 입력"></textarea></td><td><input type="text" placeholder="유형"></td><td style="text-align:center"><select><option>상</option><option selected>중</option><option>하</option></select></td><td><textarea rows="2" placeholder="안전대책 입력"></textarea></td></tr>
+    <tr id="risk-row-3"><td class="num-cell">3</td><td><textarea rows="2" placeholder="위험요인 입력"></textarea></td><td><input type="text" placeholder="유형"></td><td style="text-align:center"><select><option>상</option><option selected>중</option><option>하</option></select></td><td><textarea rows="2" placeholder="안전대책 입력"></textarea></td></tr>
+    <tr id="risk-row-4"><td class="num-cell">4</td><td><textarea rows="2" placeholder="위험요인 입력"></textarea></td><td><input type="text" placeholder="유형"></td><td style="text-align:center"><select><option>상</option><option selected>중</option><option>하</option></select></td><td><textarea rows="2" placeholder="안전대책 입력"></textarea></td></tr>
+    <tr id="risk-row-5"><td class="num-cell">5</td><td><textarea rows="2" placeholder="위험요인 입력"></textarea></td><td><input type="text" placeholder="유형"></td><td style="text-align:center"><select><option>상</option><option selected>중</option><option>하</option></select></td><td><textarea rows="2" placeholder="안전대책 입력"></textarea></td></tr>
+  </table>
+</div>
+
+<!-- 모바일용 위험요인 카드 -->
+<div class="risk-cards-wrap" id="risk-cards">
+  <div class="risk-card" id="rcard-1"><div class="risk-card-header"><span class="risk-card-num">1</span></div><div class="risk-card-full"><div class="rf-label">위험요인</div><textarea rows="2" placeholder="위험요인 입력"></textarea></div><div class="risk-card-body"><div class="rf"><div class="rf-label">재해유형</div><input type="text" placeholder="유형"></div><div class="rf"><div class="rf-label">위험도</div><select><option>상</option><option selected>중</option><option>하</option></select></div></div><div class="risk-card-full"><div class="rf-label">안전대책</div><textarea rows="2" placeholder="안전대책 입력"></textarea></div></div>
+  <div class="risk-card" id="rcard-2"><div class="risk-card-header"><span class="risk-card-num">2</span></div><div class="risk-card-full"><div class="rf-label">위험요인</div><textarea rows="2" placeholder="위험요인 입력"></textarea></div><div class="risk-card-body"><div class="rf"><div class="rf-label">재해유형</div><input type="text" placeholder="유형"></div><div class="rf"><div class="rf-label">위험도</div><select><option>상</option><option selected>중</option><option>하</option></select></div></div><div class="risk-card-full"><div class="rf-label">안전대책</div><textarea rows="2" placeholder="안전대책 입력"></textarea></div></div>
+  <div class="risk-card" id="rcard-3"><div class="risk-card-header"><span class="risk-card-num">3</span></div><div class="risk-card-full"><div class="rf-label">위험요인</div><textarea rows="2" placeholder="위험요인 입력"></textarea></div><div class="risk-card-body"><div class="rf"><div class="rf-label">재해유형</div><input type="text" placeholder="유형"></div><div class="rf"><div class="rf-label">위험도</div><select><option>상</option><option selected>중</option><option>하</option></select></div></div><div class="risk-card-full"><div class="rf-label">안전대책</div><textarea rows="2" placeholder="안전대책 입력"></textarea></div></div>
+  <div class="risk-card" id="rcard-4"><div class="risk-card-header"><span class="risk-card-num">4</span></div><div class="risk-card-full"><div class="rf-label">위험요인</div><textarea rows="2" placeholder="위험요인 입력"></textarea></div><div class="risk-card-body"><div class="rf"><div class="rf-label">재해유형</div><input type="text" placeholder="유형"></div><div class="rf"><div class="rf-label">위험도</div><select><option>상</option><option selected>중</option><option>하</option></select></div></div><div class="risk-card-full"><div class="rf-label">안전대책</div><textarea rows="2" placeholder="안전대책 입력"></textarea></div></div>
+  <div class="risk-card" id="rcard-5"><div class="risk-card-header"><span class="risk-card-num">5</span></div><div class="risk-card-full"><div class="rf-label">위험요인</div><textarea rows="2" placeholder="위험요인 입력"></textarea></div><div class="risk-card-body"><div class="rf"><div class="rf-label">재해유형</div><input type="text" placeholder="유형"></div><div class="rf"><div class="rf-label">위험도</div><select><option>상</option><option selected>중</option><option>하</option></select></div></div><div class="risk-card-full"><div class="rf-label">안전대책</div><textarea rows="2" placeholder="안전대책 입력"></textarea></div></div>
+</div>
+<button class="add-row-btn" onclick="addRiskRow()">+ 위험요인 행 추가</button>
+
+<div class="sec-hdr" style="margin-top:8px">◆ 작업인원 명단 (철도종사자 작업 적합성 확인)</div>
+<div class="progress-summary" id="sig-summary">0 / 0 명 서명 완료</div>
+
+<!-- PC용 작업자 테이블 -->
+<div class="workers-table-wrap">
+  <table class="form-table" id="workers-table">
+    <tr>
+      <td class="th" style="width:26px">번호</td>
+      <td class="th" style="width:88px">성명</td>
+      <td class="th" style="min-width:80px">서명</td>
+      <td class="th" style="width:48px">음주</td>
+      <td class="th" style="width:48px">체온</td>
+      <td class="th" style="width:48px">약물</td>
+      <td class="th" style="width:68px">질병/피로</td>
+      <td class="th" style="width:58px">안전장비</td>
+      <td class="th">비고</td>
+    </tr>
+  </table>
+</div>
+
+<!-- 모바일용 작업자 카드 -->
+<div class="workers-cards-wrap" id="workers-cards"></div>
+<div style="display:flex;gap:6px;margin-top:6px;align-items:center">
+  <input type="text" id="new-name" placeholder="성명" style="border:1px solid #ccc;border-radius:4px;padding:6px 10px;max-width:110px;font-family:inherit">
+  <button class="add-row-btn" style="margin:0;padding:6px 14px;width:auto;border-style:solid" onclick="addWorker()">+ 작업자 추가</button>
+</div>
+
+<div class="print-area">
+  <button class="print-btn" onclick="printDoc()">🖨 출력 / PDF 저장</button>
+</div>
+</div>
+
+<div class="modal-bg" id="sign-modal">
+  <div class="modal">
+    <h3 id="modal-name">전자서명</h3>
+    <p style="font-size:12px;color:#888;margin-bottom:8px">서명란에 직접 서명해 주세요.</p>
+    <canvas class="sig-canvas" id="sig-canvas" width="300" height="80"></canvas>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="clearSig()">지우기</button>
+      <button class="btn-cancel" onclick="closeModal()">취소</button>
+      <button class="btn-ok" onclick="confirmSig()">서명 완료</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const WMO_MAP = {
+  0:'☀️ 맑음', 1:'🌤️ 대체로 맑음', 2:'⛅ 구름 조금', 3:'☁️ 흐림',
+  45:'🌫️ 안개', 48:'🌫️ 짙은 안개',
+  51:'🌦️ 가벼운 이슬비', 53:'🌦️ 이슬비', 55:'🌧️ 강한 이슬비',
+  61:'🌧️ 가벼운 비', 63:'🌧️ 비', 65:'🌧️ 강한 비',
+  71:'🌨️ 가벼운 눈', 73:'🌨️ 눈', 75:'❄️ 강한 눈',
+  77:'🌨️ 싸락눈', 80:'🌦️ 소나기', 81:'🌧️ 강한 소나기', 82:'⛈️ 매우 강한 소나기',
+  85:'🌨️ 눈 소나기', 86:'❄️ 강한 눈 소나기',
+  95:'⛈️ 천둥번개', 96:'⛈️ 우박 동반 천둥', 99:'⛈️ 강한 우박 천둥'
+};
+
+function getSafetyAlert(feelsLike) {
+  if (feelsLike >= 38) return {cls:'hot',  text:'🚨 폭염 경보 — 즉시 작업 중지 검토'};
+  if (feelsLike >= 33) return {cls:'hot',  text:'⚠️ 폭염 주의보 — 충분한 수분 보충 및 휴식'};
+  if (feelsLike >= 28) return {cls:'hot',  text:'🌡️ 고온 주의 — 2시간마다 휴식 권장'};
+  if (feelsLike <= -15) return {cls:'cold', text:'🚨 한파 경보 — 보온 필수, 작업시간 단축'};
+  if (feelsLike <= -5)  return {cls:'cold', text:'⚠️ 한파 주의보 — 보온 장비 착용 철저'};
+  if (feelsLike <= 5)   return {cls:'cold', text:'🌨️ 저온 주의 — 방한복 착용 권장'};
+  return {cls:'normal', text:'✅ 기상 안전 — 작업 진행 가능'};
+}
+
+// 안전보건공단 체감온도 산출표 기준
+// Steadman Heat Index 공식 (기온 T°C, 습도 H%)
+// 안전보건공단 체감온도 산출표 룩업테이블
+// 행: 습도(25~100, 5단위) / 열: 기온(25~40, 1단위)
+const HI_TEMPS = [25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40];
+const HI_HUMS  = [25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100];
+const HI_TABLE = [
+  [22.2,23.1,24.0,24.9,25.8,26.7,27.6,28.5,29.5,30.4,31.3,32.2,33.1,34.0,35.0,35.9],
+  [22.8,23.7,24.6,25.5,26.5,27.4,28.3,29.2,30.2,31.1,32.0,33.0,33.9,34.8,35.8,36.7],
+  [23.3,24.2,25.2,26.1,27.0,28.0,28.9,29.9,30.8,31.8,32.7,33.7,34.6,35.6,36.5,37.5],
+  [23.8,24.7,25.7,26.6,27.6,28.5,29.5,30.4,31.4,32.4,33.3,34.3,35.3,36.2,37.2,38.2],
+  [24.2,25.2,26.1,27.1,28.1,29.0,30.0,31.0,32.0,32.9,33.9,34.9,35.9,36.9,37.8,38.8],
+  [24.6,25.6,26.6,27.6,28.6,29.5,30.5,31.5,32.5,33.5,34.5,35.4,36.4,37.4,38.4,39.4],
+  [25.1,26.0,27.0,28.0,29.0,30.0,31.0,32.0,33.0,34.0,35.0,36.0,37.0,38.0,39.0,40.0],
+  [25.5,26.5,27.5,28.4,29.4,30.4,31.4,32.4,33.5,34.5,35.5,36.5,37.5,38.5,39.5,40.5],
+  [25.9,26.9,27.9,28.9,29.9,30.9,31.9,32.9,33.9,34.9,35.9,36.9,38.0,39.0,40.0,41.0],
+  [26.2,27.2,28.2,29.3,30.3,31.3,32.3,33.3,34.3,35.4,36.4,37.4,38.4,39.5,40.5,41.5],
+  [26.6,27.6,28.6,29.7,30.7,31.7,32.7,33.7,34.8,35.8,36.8,37.8,38.9,39.9,40.9,42.0],
+  [27.0,28.0,29.0,30.0,31.1,32.1,33.1,34.1,35.2,36.2,37.2,38.3,39.3,40.4,41.4,42.4],
+  [27.3,28.4,29.4,30.4,31.4,32.5,33.5,34.5,35.6,36.6,37.7,38.7,39.7,40.8,41.9,42.9],
+  [27.7,28.7,29.7,30.8,31.8,32.9,33.9,34.9,36.0,37.0,38.1,39.1,40.2,41.2,42.3,43.3],
+  [28.0,29.1,30.1,31.1,32.2,33.2,34.3,35.3,36.4,37.4,38.5,39.5,40.6,41.6,42.7,43.7],
+  [28.4,29.4,30.5,31.5,32.6,33.6,34.6,35.7,36.7,37.8,38.9,39.9,41.0,42.0,43.1,44.1]
+];
+
+// Heat Index 공식 (섭씨 직접 적용, 표 범위 밖 외삽용)
+function heatIndexFormula(T, R) {
+  return -8.78469475556
+    + 1.61139411    * T
+    + 2.33854883889 * R
+    - 0.14611605    * T * R
+    - 0.012308094   * T * T
+    - 0.016424828   * R * R
+    + 0.002211732   * T * T * R
+    + 0.00072546    * T * R * R
+    - 0.000003582   * T * T * R * R;
+}
+
+function calcFeelsLike(temp, humidity) {
+  if (humidity === null) return Math.round(temp * 10) / 10;
+
+  const inTRange = temp    >= 25 && temp    <= 40;
+  const inHRange = humidity >= 25 && humidity <= 100;
+
+  // 표 범위 내: 쌍선형 보간
+  if (inTRange && inHRange) {
+    const ti    = Math.max(0, Math.min(HI_TEMPS.length - 2, Math.floor(temp - 25)));
+    const tf    = temp - HI_TEMPS[ti];
+    const hBase = (humidity - 25) / 5;
+    const hi    = Math.max(0, Math.min(HI_HUMS.length - 2, Math.floor(hBase)));
+    const hf    = hBase - hi;
+    const result =
+      HI_TABLE[hi    ][ti    ] * (1-tf) * (1-hf) +
+      HI_TABLE[hi    ][ti + 1] *    tf  * (1-hf) +
+      HI_TABLE[hi + 1][ti    ] * (1-tf) *    hf  +
+      HI_TABLE[hi + 1][ti + 1] *    tf  *    hf;
+    return Math.round(result * 10) / 10;
+  }
+
+  // 표 범위 밖: Heat Index 공식으로 외삽
+  // 단, 기온 25 미만이면 체감온도 의미 없으므로 기온 그대로 반환
+  if (temp < 25) return Math.round(temp * 10) / 10;
+
+  // 습도가 표 범위 밖(0~24%)이거나 기온이 40 초과인 경우
+  // 표 경계값과 공식값의 차이(보정값)를 구해 부드럽게 연결
+  const clampT = Math.max(25, Math.min(40, temp));
+  const clampH = Math.max(25, Math.min(100, humidity));
+
+  // 경계에서의 표 보간값
+  const tiBound    = Math.max(0, Math.min(HI_TEMPS.length - 2, Math.floor(clampT - 25)));
+  const tfBound    = clampT - HI_TEMPS[tiBound];
+  const hBaseBound = (clampH - 25) / 5;
+  const hiBound    = Math.max(0, Math.min(HI_HUMS.length - 2, Math.floor(hBaseBound)));
+  const hfBound    = hBaseBound - hiBound;
+  const tableBound =
+    HI_TABLE[hiBound    ][tiBound    ] * (1-tfBound) * (1-hfBound) +
+    HI_TABLE[hiBound    ][tiBound + 1] *    tfBound  * (1-hfBound) +
+    HI_TABLE[hiBound + 1][tiBound    ] * (1-tfBound) *    hfBound  +
+    HI_TABLE[hiBound + 1][tiBound + 1] *    tfBound  *    hfBound;
+
+  // 경계에서의 공식값
+  const formulaBound = heatIndexFormula(clampT, clampH);
+
+  // 보정값(offset) = 표값 - 공식값 → 실제값에 더해 연속성 유지
+  const offset = tableBound - formulaBound;
+  const raw    = heatIndexFormula(temp, Math.max(0, humidity)) + offset;
+  return Math.round(raw * 10) / 10;
+}
+
+// 안전보건공단 단계 기준 (체감온도 기준)
+// 관심(~31), 주의(31~33), 경고(33~35), 위험(35~)
+function getSafetyAlert(feelsLike) {
+  if (feelsLike >= 35) return {cls:'danger', text:'위험 — 가능한 모든 옥외 작업 중지 검토'};
+  if (feelsLike >= 33) return {cls:'hot',    text:'경고 — 무더운 시간대 작업 중지 검토'};
+  if (feelsLike >= 31) return {cls:'warn',   text:'주의 — 매시간 10~15분 휴식 권장'};
+  if (feelsLike >= 28) return {cls:'normal', text:'관심 — 작업 진행 가능, 수분 보충'};
+  if (feelsLike <= -15) return {cls:'cold',  text:'한파 경보 — 보온 필수, 작업시간 단축'};
+  if (feelsLike <= -5)  return {cls:'cold',  text:'한파 주의보 — 보온 장비 착용 철저'};
+  if (feelsLike <= 5)   return {cls:'cold',  text:'저온 주의 — 방한복 착용 권장'};
+  return {cls:'safe', text:'정상 — 작업 진행 가능'};
+}
+
+function calcFeelsLikeUI() {
+  const tempVal  = document.getElementById('calc-temp').value;
+  const humVal   = document.getElementById('calc-hum').value;
+  const resultEl = document.getElementById('calc-result');
+  const alertEl  = document.getElementById('calc-alert');
+  const valEl    = document.getElementById('calc-result-val');
+
+  if (tempVal === '') { resultEl.style.display = 'none'; alertEl.style.display = 'none'; return; }
+
+  const temp  = parseFloat(tempVal);
+  const hum   = humVal !== '' ? parseFloat(humVal) : null;
+  const feels = calcFeelsLike(temp, hum);
+  const alert = getSafetyAlert(feels);
+  const colors = {
+    danger:['#E82A2A','#fff'], hot:['#FF8C00','#fff'],
+    warn:  ['#FFD700','#333'], normal:['#00BFFF','#fff'],
+    cold:  ['#cce5ff','#004085'], safe:['#d4edda','#155724']
+  };
+  const [bg, fg] = colors[alert.cls] || ['#eee','#333'];
+
+  valEl.textContent        = feels;
+  resultEl.style.display   = 'block';
+  alertEl.style.display    = 'block';
+  alertEl.textContent      = alert.text;
+  alertEl.style.background = bg;
+  alertEl.style.color      = fg;
+}
+
+async function fetchWeather() {
+  const btn   = document.getElementById('gps-btn');
+  const bar   = document.getElementById('weather-bar');
+  const locEl = document.getElementById('gps-location');
+
+  if (!navigator.geolocation) {
+    bar.className = 'weather-bar error';
+    bar.style.display = 'flex';
+    bar.textContent = 'GPS를 지원하지 않는 환경입니다.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = '📍 위치 확인 중...';
+  bar.className = 'weather-bar loading';
+  bar.style.display = 'flex';
+  bar.textContent = '현재 위치를 확인하고 있습니다...';
+
+  navigator.geolocation.getCurrentPosition(async pos => {
+    const {latitude: lat, longitude: lon} = pos.coords;
+    bar.textContent = '날씨 데이터를 불러오는 중...';
+
+    try {
+      let locationName = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+      try {
+        const geoRes  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ko`);
+        const geoData = await geoRes.json();
+        const addr    = geoData.address;
+        locationName  = [addr.city||addr.county||addr.town||addr.village, addr.suburb||addr.neighbourhood||addr.road].filter(Boolean).join(' ');
+      } catch(e) {}
+
+      const url  = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code&timezone=Asia%2FSeoul&wind_speed_unit=kmh`;
+      const res  = await fetch(url);
+      const data = await res.json();
+      const cur  = data.current;
+
+      const temp     = Math.round(cur.temperature_2m * 10) / 10;
+      const apparent = Math.round(cur.apparent_temperature * 10) / 10;
+      const humidity = Math.round(cur.relative_humidity_2m);
+      const wind     = Math.round(cur.wind_speed_10m * 10) / 10;
+      const wDesc    = WMO_MAP[cur.weather_code] || '날씨 정보 없음';
+      const alert    = getSafetyAlert(apparent);
+      const now      = new Date();
+      const timeStr  = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+      const weatherVal = `${apparent}°C (기온 ${temp}°C, 습도 ${humidity}%, 풍속 ${wind}㎞/h)`;
+      const alertText  = alert.text;
+
+      bar.className = 'weather-bar';
+      bar.innerHTML = `
+        <div class="w-icon">${wDesc.split(' ')[0]}</div>
+        <div class="w-info">
+          <div class="w-item"><span class="w-label">기온</span><span class="w-val">${temp}°C</span></div>
+          <div class="w-item"><span class="w-label">체감온도</span><span class="w-val">${apparent}°C</span></div>
+          <div class="w-item"><span class="w-label">습도</span><span class="w-val">${humidity}%</span></div>
+          <div class="w-item"><span class="w-label">풍속</span><span class="w-val">${wind}㎞/h</span></div>
+          <div class="w-item"><span class="w-label">날씨</span><span class="w-val" style="font-size:11px">${wDesc.split(' ').slice(1).join(' ')}</span></div>
+        </div>
+        <span class="w-alert ${alert.cls}">${alert.text}</span>`;
+
+      // 체감온도 자동 입력 (PC + 모바일 공통)
+      const fields = [
+        ['w-time-1','w-temp-1','w-measure-1'],
+        ['w-time-1m','w-temp-1m','w-measure-1m']
+      ];
+      fields.forEach(([t, tp, m]) => {
+        const el = document.getElementById(t);
+        if (el) { el.value = timeStr; document.getElementById(tp).value = weatherVal; document.getElementById(m).value = alertText; }
+      });
+
+      // 폭염/한파 자동 체크
+      const hazardCbs = document.querySelectorAll('#hazard-checks input[type=checkbox]');
+      if (apparent >= 31) hazardCbs.forEach(cb => { if (cb.dataset.label === '폭염') cb.checked = true; });
+      if (apparent <= -5) hazardCbs.forEach(cb => { if (cb.dataset.label === '한파') cb.checked = true; });
+
+      locEl.textContent = `📍 ${locationName} (${timeStr} 기준)`;
+      btn.textContent   = '📍 날씨 새로고침';
+      btn.disabled      = false;
+
+    } catch(e) {
+      bar.className = 'weather-bar error';
+      bar.textContent = '날씨 데이터를 불러오지 못했습니다. 네트워크를 확인해 주세요.';
+      btn.textContent = '📍 위치 기반 날씨 불러오기';
+      btn.disabled    = false;
+    }
+  }, err => {
+    bar.className   = 'weather-bar error';
+    bar.style.display = 'flex';
+    bar.textContent = err.code === 1 ? 'GPS 권한이 거부되었습니다. 브라우저 설정에서 위치 권한을 허용해 주세요.' : 'GPS 위치를 확인할 수 없습니다. 다시 시도해 주세요.';
+    btn.textContent = '📍 위치 기반 날씨 불러오기';
+    btn.disabled    = false;
+  }, {timeout: 10000});
+}
+
+function waitForXLSX() {
+  return new Promise((resolve, reject) => {
+    if (window.XLSX) { resolve(); return; }
+    let tries = 0;
+    const timer = setInterval(() => {
+      if (window.XLSX) { clearInterval(timer); resolve(); }
+      else if (++tries > 30) { clearInterval(timer); reject(new Error('SheetJS 로드 실패. 네트워크를 확인해 주세요.')); }
+    }, 200);
+  });
+}
+
+const GH_STORAGE_KEY = 'tbm_gh_config';
+const SKIP_SHEETS    = ['sheet1','데이터필드','data','summary','요약'];
+const TYPE_MAP = {
+  "떨어짐":"떨어짐","넘어짐":"넘어짐","깔림":"깔림","부딪힘":"부딪힘",
+  "맞음":"맞음","무너짐":"무너짐","끼임":"끼임","감전":"감전",
+  "폭발/화재":"폭발/화재","무리한 신체동작":"무리한 신체동작",
+  "화학물질 누출/접촉":"화학물질 누출/접촉","절단/베임/찔림":"절단/베임/찔림"
+};
+
+let ghOwner = '', ghRepo = '';
+let sheetIndex  = [];
+let selectedSheet = null;
+let riskRowCount  = 5;
+let workers = [], sigCtx, sigCanvas, isDrawing = false, currentIdx = null;
+
+document.getElementById('edu-date').value = new Date().toISOString().split('T')[0];
+
+window.addEventListener('load', () => {
+  try {
+    const c = JSON.parse(localStorage.getItem(GH_STORAGE_KEY) || '{}');
+    if (c.owner) document.getElementById('gh-owner').value = c.owner;
+    if (c.repo)  document.getElementById('gh-repo').value  = c.repo;
+    if (c.owner && c.repo) connectGitHub(true);
+  } catch(e) {}
+});
+
+function getCellVal(ws, col, row) {
+  const cell = ws[window.XLSX.utils.encode_cell({c: col, r: row})];
+  if (!cell) return '';
+  return String(cell.v !== undefined ? cell.v : (cell.w || '')).trim();
+}
+
+function parseXlsx(arrayBuffer, fileName) {
+  const wb      = window.XLSX.read(arrayBuffer, {type:'array', cellFormula:true, sheetStubs:true});
+  const results = [];
+
+  wb.SheetNames.forEach(sname => {
+    if (SKIP_SHEETS.includes(sname.toLowerCase())) return;
+    const ws = wb.Sheets[sname];
+    if (!ws['!ref']) return;
+    const range = window.XLSX.utils.decode_range(ws['!ref']);
+    const risks = [];
+
+    for (let r = 8; r <= range.e.r; r++) {
+      const hazard  = getCellVal(ws, 5,  r);
+      const type    = getCellVal(ws, 9,  r);
+      const measure = getCellVal(ws, 11, r);
+      const sevRaw  = getCellVal(ws, 14, r);
+
+      if (!hazard || hazard.length < 3) continue;
+      if (/^[=\[]/.test(hazard)) continue;
+      if (['작업절차','유해･위험','위험정보','예방대책'].some(h => hazard.startsWith(h))) continue;
+
+      const sev   = parseInt(sevRaw);
+      const level = !isNaN(sev) ? (sev >= 3 ? '상' : sev <= 1 ? '하' : '중') : '중';
+      const h = hazard.replace(/\n/g,' ').replace(/\s+/g,' ');
+      const m = measure.replace(/\n/g,' ').replace(/\s+/g,' ');
+
+      if (!risks.find(x => x.hazard === h)) risks.push({hazard: h, type, measure: m, level});
+    }
+
+    if (risks.length > 0) results.push({sheetName: sname, fileName, risks});
+  });
+
+  return results;
+}
+
+async function connectGitHub(silent = false) {
+  const owner       = document.getElementById('gh-owner').value.trim();
+  const repo        = document.getElementById('gh-repo').value.trim();
+  const status      = document.getElementById('gh-status');
+  const searchInput = document.getElementById('work-search');
+
+  if (!owner || !repo) { status.textContent = '⚠️ 사용자명과 저장소명을 모두 입력해 주세요.'; return; }
+  status.innerHTML = '<span style="color:#185FA5">🔄 연결 중...</span>';
+
+  try {
+    await waitForXLSX();
+    const res   = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/data`);
+    if (!res.ok) throw new Error(res.status === 404 ? '저장소 또는 data 폴더를 찾을 수 없습니다.' : `GitHub 오류 (${res.status})`);
+
+    const files = (await res.json()).filter(f => f.type === 'file' && /\.(xlsx|xls)$/i.test(f.name));
+    if (!files.length) throw new Error('data 폴더에 xlsx 파일이 없습니다.');
+
+    status.innerHTML = `<span style="color:#185FA5">🔄 xlsx ${files.length}개 파일 읽는 중...</span>`;
+    sheetIndex = [];
+
+    for (const f of files) {
+      const fileRes = await fetch(`https://raw.githubusercontent.com/${owner}/${repo}/main/data/${f.name}`);
+      if (!fileRes.ok) continue;
+      sheetIndex.push(...parseXlsx(await fileRes.arrayBuffer(), f.name));
+    }
+
+    if (!sheetIndex.length) throw new Error('작업 시트에서 위험요인을 찾을 수 없습니다.');
+
+    ghOwner = owner; ghRepo = repo;
+    localStorage.setItem(GH_STORAGE_KEY, JSON.stringify({owner, repo}));
+
+    const totalRisks = sheetIndex.reduce((s, x) => s + x.risks.length, 0);
+    status.innerHTML = `<span style="color:#2d6a2d">✅ 연결됨 — 작업 ${sheetIndex.length}개 / 위험요인 ${totalRisks}건 로드 완료</span>`;
+    searchInput.disabled     = false;
+    searchInput.placeholder  = '작업명 검색 (예: 집수정, 에어컨...)';
+    const cfg = document.getElementById('gh-config-area');
+    cfg.style.borderColor = '#90c890';
+    cfg.style.background  = '#f0faf0';
+
+  } catch(e) {
+    status.innerHTML    = `<span style="color:#a33">❌ ${e.message}</span>`;
+    searchInput.disabled = true;
+  }
+}
+
+function onSearch(val) {
+  const dd  = document.getElementById('search-dropdown');
+  const btn = document.getElementById('load-btn');
+  const q   = val.trim();
+
+  if (!q || !sheetIndex.length) { dd.classList.remove('open'); btn.disabled = true; selectedSheet = null; return; }
+
+  const matches = sheetIndex.filter(x => x.sheetName.includes(q));
+  if (!matches.length) {
+    dd.innerHTML = '<div class="no-match">일치하는 작업명이 없습니다.</div>';
+    dd.classList.add('open'); btn.disabled = true; selectedSheet = null; return;
+  }
+
+  dd.innerHTML = matches.map(x =>
+    `<div class="dropdown-item" onclick="selectSheet(${sheetIndex.indexOf(x)})">
+      ${x.sheetName}<span class="cnt">${x.risks.length}건 · ${x.fileName}</span>
+    </div>`
+  ).join('');
+  dd.classList.add('open');
+}
+
+function selectSheet(idx) {
+  selectedSheet = sheetIndex[idx];
+  document.getElementById('work-search').value = selectedSheet.sheetName;
+  document.getElementById('search-dropdown').classList.remove('open');
+  document.getElementById('load-btn').disabled = false;
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search-box')) document.getElementById('search-dropdown').classList.remove('open');
+});
+
+function makeRiskRowHTML(num, r = null) {
+  const selOpts = ['상','중','하'].map(l => `<option${r && l===r.level?' selected':''}${!r && l==='중'?' selected':''}>${l}</option>`).join('');
+  return {
+    trHTML: `<td class="num-cell">${num}</td>
+      <td><textarea rows="2" placeholder="위험요인 입력">${r ? r.hazard : ''}</textarea></td>
+      <td><input type="text" placeholder="유형" value="${r ? r.type : ''}"></td>
+      <td style="text-align:center"><select>${selOpts}</select></td>
+      <td><textarea rows="2" placeholder="안전대책 입력">${r ? r.measure : ''}</textarea></td>`,
+    cardHTML: `<div class="risk-card-header"><span class="risk-card-num">${num}</span></div>
+      <div class="risk-card-full"><div class="rf-label">위험요인</div><textarea rows="2" placeholder="위험요인 입력">${r ? r.hazard : ''}</textarea></div>
+      <div class="risk-card-body">
+        <div class="rf"><div class="rf-label">재해유형</div><input type="text" placeholder="유형" value="${r ? r.type : ''}"></div>
+        <div class="rf"><div class="rf-label">위험도</div><select>${selOpts}</select></div>
+      </div>
+      <div class="risk-card-full"><div class="rf-label">안전대책</div><textarea rows="2" placeholder="안전대책 입력">${r ? r.measure : ''}</textarea></div>`
+  };
+}
+
+function appendRiskRow(num, riskData = null) {
+  const {trHTML, cardHTML} = makeRiskRowHTML(num, riskData);
+  const tbl  = document.getElementById('risk-table');
+  const tr   = document.createElement('tr');
+  tr.id      = 'risk-row-' + num;
+  tr.innerHTML = trHTML;
+  tbl.appendChild(tr);
+
+  const cards = document.getElementById('risk-cards');
+  const card  = document.createElement('div');
+  card.className = 'risk-card';
+  card.id        = 'rcard-' + num;
+  card.innerHTML = cardHTML;
+  cards.appendChild(card);
+}
+
+function loadRisks() {
+  if (!selectedSheet) return;
+  const risks = selectedSheet.risks;
+
+  document.querySelectorAll('#hazard-checks input[type=checkbox]').forEach(cb => cb.checked = false);
+  [...new Set(risks.map(r => r.type))].forEach(t => {
+    document.querySelectorAll('#hazard-checks input[type=checkbox]').forEach(cb => {
+      if (cb.dataset.label === TYPE_MAP[t]) cb.checked = true;
+    });
+  });
+
+  document.querySelectorAll('#risk-table tr[id^="risk-row-"]').forEach(r => r.remove());
+  document.querySelectorAll('#risk-cards .risk-card').forEach(r => r.remove());
+  riskRowCount = 0;
+
+  risks.forEach(r => appendRiskRow(++riskRowCount, r));
+
+  if (!document.getElementById('work-content').value) {
+    document.getElementById('work-content').value = selectedSheet.sheetName;
+  }
+}
+
+function addRiskRow() {
+  appendRiskRow(++riskRowCount);
+}
+
+function updateSigSummary() {
+  const s = workers.filter(w => w.signed).length;
+  document.getElementById('sig-summary').textContent = `${s} / ${workers.length} 명 서명 완료`;
+}
+
+function renderWorkers() {
+  const tbl   = document.getElementById('workers-table');
+  const cards = document.getElementById('workers-cards');
+  tbl.querySelectorAll('tr.wrow').forEach(r => r.remove());
+  cards.innerHTML = '';
+
+  const FIELDS = ['drink','temp','drug','fatigue','equipment','note'];
+
+  workers.forEach((w, i) => {
+    const sigBtn   = `<button onclick="openSigModal(${i})" style="font-size:11px;padding:3px 8px;border:1px solid #ccc;border-radius:3px;background:#fff;cursor:pointer;font-family:inherit">서명하기</button>`;
+    const sigImg   = `<img src="${w.sigData}" class="sig-thumb">`;
+    const sigBtnLg = `<button onclick="openSigModal(${i})" style="padding:6px 14px;background:#185FA5;color:white;border:none;border-radius:4px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">✍️ 서명</button>`;
+    const sigImgLg = `<img src="${w.sigData}" style="height:32px;max-width:100px;object-fit:contain">`;
+
+    // PC 행
+    const tr = document.createElement('tr');
+    tr.className = 'wrow';
+    tr.innerHTML = `
+      <td style="text-align:center;color:#888">${i+1}</td>
+      <td>${w.name}</td>
+      <td style="padding:2px 4px;min-width:80px">${w.signed ? sigImg : sigBtn}</td>
+      <td><input type="text" value="${w.drink}" placeholder="정상" style="text-align:center"></td>
+      <td><input type="text" value="${w.temp}" placeholder="36.5" style="text-align:center"></td>
+      <td><input type="text" value="${w.drug}" placeholder="음성" style="text-align:center"></td>
+      <td><input type="text" value="${w.fatigue}" placeholder="없음" style="text-align:center"></td>
+      <td><input type="text" value="${w.equipment}" placeholder="적합" style="text-align:center"></td>
+      <td><input type="text" value="${w.note}"></td>`;
+    tr.querySelectorAll('input[type=text]').forEach((el, fi) => {
+      el.oninput = () => { workers[i][FIELDS[fi]] = el.value; };
+    });
+    tbl.appendChild(tr);
+
+    // 모바일 카드
+    const card = document.createElement('div');
+    card.className = 'worker-card';
+    card.innerHTML = `
+      <div class="worker-card-top">
+        <span class="worker-card-name">${i+1}. ${w.name}</span>
+        ${w.signed ? sigImgLg : sigBtnLg}
+      </div>
+      <div class="worker-card-grid">
+        <div class="wf"><div class="wf-label">음주</div><input type="text" value="${w.drink}" placeholder="정상"></div>
+        <div class="wf"><div class="wf-label">체온</div><input type="text" value="${w.temp}" placeholder="36.5"></div>
+        <div class="wf"><div class="wf-label">약물</div><input type="text" value="${w.drug}" placeholder="음성"></div>
+        <div class="wf"><div class="wf-label">질병/피로</div><input type="text" value="${w.fatigue}" placeholder="없음"></div>
+        <div class="wf"><div class="wf-label">안전장비</div><input type="text" value="${w.equipment}" placeholder="적합"></div>
+        <div class="wf"><div class="wf-label">비고</div><input type="text" value="${w.note}"></div>
+      </div>`;
+    card.querySelectorAll('input[type=text]').forEach((el, fi) => {
+      el.oninput = () => { workers[i][FIELDS[fi]] = el.value; };
+    });
+    cards.appendChild(card);
+  });
+
+  updateSigSummary();
+}
+
+function addWorker() {
+  const name = document.getElementById('new-name').value.trim();
+  if (!name) { alert('성명을 입력해 주세요.'); return; }
+  workers.push({name, signed:false, sigData:null, drink:'', temp:'', drug:'', fatigue:'', equipment:'', note:''});
+  document.getElementById('new-name').value = '';
+  renderWorkers();
+}
+
+function openSigModal(idx) {
+  currentIdx = idx;
+  document.getElementById('modal-name').textContent = workers[idx].name + ' 서명';
+  document.getElementById('sign-modal').classList.add('open');
+  sigCanvas = document.getElementById('sig-canvas');
+  sigCtx    = sigCanvas.getContext('2d');
+  sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+  sigCtx.strokeStyle = '#111'; sigCtx.lineWidth = 2; sigCtx.lineCap = 'round';
+
+  const getP = e => {
+    const r = sigCanvas.getBoundingClientRect();
+    const s = e.touches ? e.touches[0] : e;
+    return {x:(s.clientX-r.left)*sigCanvas.width/r.width, y:(s.clientY-r.top)*sigCanvas.height/r.height};
+  };
+  sigCanvas.onmousedown  = sigCanvas.ontouchstart = e => { e.preventDefault(); isDrawing=true; const p=getP(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); };
+  sigCanvas.onmousemove  = sigCanvas.ontouchmove  = e => { e.preventDefault(); if(!isDrawing)return; const p=getP(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); };
+  sigCanvas.onmouseup    = sigCanvas.ontouchend   = () => { isDrawing = false; };
+}
+
+function clearSig()   { if(sigCtx) sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height); }
+function closeModal() { document.getElementById('sign-modal').classList.remove('open'); isDrawing=false; }
+function confirmSig() {
+  if(currentIdx===null) return;
+  workers[currentIdx].signed  = true;
+  workers[currentIdx].sigData = sigCanvas.toDataURL();
+  closeModal(); renderWorkers();
+}
+
+function printDoc() {
+  const v = id => document.getElementById(id)?.value || '';
+
+  let riskHTML = '';
+  document.querySelectorAll('#risk-table tr[id^="risk-row-"]').forEach((tr, i) => {
+    const tds  = tr.querySelectorAll('td');
+    const haz  = (tds[1]?.querySelector('textarea')?.value||'').replace(/\n/g,'<br>');
+    const typ  = tds[2]?.querySelector('input')?.value||'';
+    const lv   = tds[3]?.querySelector('select')?.value||'';
+    const meas = (tds[4]?.querySelector('textarea')?.value||'').replace(/\n/g,'<br>');
+    const lvColor = lv==='상'?'#A32D2D':lv==='중'?'#854F0B':'#3B6D11';
+    riskHTML += `<tr><td class="tc">${i+1}</td><td>${haz}</td><td class="tc">${typ}</td><td class="tc" style="color:${lvColor};font-weight:700">${lv}</td><td>${meas}</td></tr>`;
+  });
+
+  const checkedH = [...document.querySelectorAll('#hazard-checks input[type=checkbox]:checked')].map(cb => cb.dataset.label);
+  if (v('hazard-etc')) checkedH.push('기타: ' + v('hazard-etc'));
+
+  const checkedP = [...document.querySelectorAll('#ppe-checks input[type=checkbox]:checked')].map(cb => cb.parentElement.textContent.trim());
+  if (v('ppe-etc')) checkedP.push('기타: ' + v('ppe-etc'));
+
+  let wHTML = '';
+  workers.forEach((w, i) => {
+    wHTML += `<tr>
+      <td class="tc">${i+1}</td><td>${w.name}</td>
+      <td class="tc">${w.signed ? `<img src="${w.sigData}" style="height:26px;max-width:72px">` : ''}</td>
+      <td class="tc">${w.drink||'정상'}</td><td class="tc">${w.temp||'36.5'}</td>
+      <td class="tc">${w.drug||'음성'}</td><td class="tc">${w.fatigue||'없음'}</td>
+      <td class="tc">${w.equipment||'적합'}</td><td></td></tr>`;
+  });
+
+  const wbar = document.getElementById('weather-bar');
+  const hasWeather = wbar.style.display !== 'none' && !wbar.classList.contains('loading') && !wbar.classList.contains('error');
+  let weatherRow = '';
+  if (hasWeather) {
+    const loc     = document.getElementById('gps-location').textContent;
+    const items   = [...wbar.querySelectorAll('.w-item')].map(el => {
+      const lbl = el.querySelector('.w-label')?.textContent||'';
+      const val = el.querySelector('.w-val')?.textContent||'';
+      return `<span style="margin-right:12px"><span style="color:#777;font-size:9pt">${lbl} </span><strong>${val}</strong></span>`;
+    }).join('');
+    const alertEl  = wbar.querySelector('.w-alert');
+    const clsColors = {danger:['#E82A2A','#fff'],hot:['#FF8C00','#fff'],warn:['#FFD700','#333'],normal:['#00BFFF','#fff'],cold:['#cce5ff','#004085'],safe:['#d4edda','#155724']};
+    const alertCls  = [...(alertEl?.classList||[])].find(c => clsColors[c]) || 'safe';
+    const [alertBg, alertClr] = clsColors[alertCls];
+    const alertHTML = alertEl ? `<span style="margin-left:8px;padding:1px 6px;border-radius:3px;font-size:9pt;font-weight:700;background:${alertBg};color:${alertClr}">${alertEl.textContent}</span>` : '';
+    weatherRow = `<tr><th class="th" style="width:52pt">현재 날씨</th><td colspan="3" style="font-size:9pt">${items}${alertHTML}<br><span style="color:#888;font-size:8pt">${loc}</span></td></tr>`;
+  }
+
+  let tempRows = '';
+  const timeInputs = document.querySelectorAll('input[id^="w-time-"], .form-table input[placeholder="시각"]');
+  const tempInputs = document.querySelectorAll('input[id^="w-temp-"], .form-table input[placeholder="°C"]');
+  const measInputs = document.querySelectorAll('.form-table input[placeholder="조치사항"]');
+  for (let i = 0; i < Math.min(timeInputs.length, 4); i++) {
+    const t = timeInputs[i]?.value||'', c = tempInputs[i]?.value||'', m = measInputs[i]?.value||'';
+    tempRows += `<tr><td></td><td class="tc">${t}</td><td class="tc">${c}</td><td>${m}</td></tr>`;
+  }
+
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8">
+<title>작업 전 안전교육 TBM 일지</title>
+<style>
+@page{size:A4 portrait;margin:10mm 12mm}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;font-size:9pt;color:#111;background:#fff;width:186mm}
+h1{text-align:center;font-size:14pt;font-weight:700;padding:6pt 0 4pt;border-bottom:2pt solid #111;margin-bottom:4pt}
+table{width:100%;border-collapse:collapse;margin-bottom:2pt}
+td,th{border:0.5pt solid #777;padding:3pt 4pt;vertical-align:middle;font-size:8.5pt}
+.th{background:#e8e8e8;font-weight:700;text-align:center;white-space:nowrap}
+.tc{text-align:center}
+.sec{background:#d0d0d0;font-weight:700;font-size:9pt;padding:3pt 6pt;border:0.5pt solid #777;border-bottom:none;margin-top:4pt}
+.approval{display:flex;justify-content:flex-end;margin-bottom:4pt}
+.apv-box{border:0.5pt solid #777;text-align:center;min-width:50pt;padding:2pt 6pt}
+.apv-lbl{font-size:8pt;color:#555;border-bottom:0.5pt solid #ddd;padding-bottom:2pt;margin-bottom:14pt}
+@media print{
+  body{width:186mm}
+  tr{page-break-inside:avoid}
+  .th,.sec,.apv-box{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head><body>
+<div class="approval">
+  <div class="apv-box"><div class="apv-lbl">결재</div></div>
+  <div class="apv-box"><div class="apv-lbl">담당</div></div>
+  <div class="apv-box"><div class="apv-lbl">관리책임자</div></div>
+</div>
+<h1>작업 전 안전교육 (위험예지훈련/TBM)</h1>
+<table>
+  <tr>
+    <th class="th" style="width:40pt">업체명</th><td>${v('company')}</td>
+    <th class="th" style="width:28pt">일시</th><td>${v('edu-date')} ${v('edu-time')}</td>
+  </tr>
+  ${weatherRow}
+</table>
+<div class="sec">◆ 작업개요</div>
+<table>
+  <tr>
+    <th class="th" style="width:52pt">작업내용<br>(승인번호)</th>
+    <td colspan="3">${(v('work-content')||'').replace(/\n/g,'<br>')}</td>
+    <th class="th" style="width:52pt">작업책임자</th>
+    <td>${v('work-manager')}</td>
+  </tr>
+  <tr>
+    <th class="th">작업장소</th>
+    <td colspan="3">${v('work-place')}</td>
+    <th class="th" style="font-size:7.5pt">철도운행안전관리자<br>(안전담당자)</th>
+    <td>${v('safety-manager')}</td>
+  </tr>
+</table>
+<table>
+  <tr>
+    <th class="th" rowspan="5" style="width:38pt">기본사항</th>
+    <td colspan="2" rowspan="5" style="font-size:8pt;line-height:1.7;vertical-align:top;padding:4pt 6pt">
+      ① 개인 안전보호구 착용 확인<br>② 2인1조 작업 원칙 준수<br>
+      ③ 작업 위험사항 인지 (안전교육)<br>④ 작업 후 정리정돈 — 작업도구 및 반입자재 확인<br>
+      ⑤ 응급상황 발생 시 신속 보고
+    </td>
+    <th class="th" style="width:60pt">작업 전 체감온도 확인</th>
+    <th class="th" style="width:44pt">측정시간</th>
+    <th class="th" style="width:44pt">체감온도</th>
+    <th class="th">안전보건조치</th>
+  </tr>
+  ${tempRows}
+</table>
+<div class="sec">위험예지</div>
+<div style="border:0.5pt solid #777;border-top:none;padding:3pt 5pt;font-size:8.5pt;line-height:1.8">
+  ${checkedH.length ? checkedH.map(h=>`<span style="margin-right:10pt">■ ${h}</span>`).join('') : '-'}
+</div>
+<div class="sec">보호구</div>
+<div style="border:0.5pt solid #777;border-top:none;padding:3pt 5pt;font-size:8.5pt;line-height:1.8">
+  ${checkedP.length ? checkedP.map(p=>`<span style="margin-right:10pt">■ ${p}</span>`).join('') : '-'}
+</div>
+<div class="sec">◆ 교육내용</div>
+<table>
+  <tr>
+    <th class="th" style="width:16pt">번호</th>
+    <th class="th">해당 작업의 예상 위험요인</th>
+    <th class="th" style="width:52pt">재해유형</th>
+    <th class="th" style="width:30pt">위험도</th>
+    <th class="th">안전수칙 및 안전대책</th>
+  </tr>
+  ${riskHTML}
+</table>
+<div class="sec">◆ 작업인원 명단 (철도종사자 작업 적합성 확인)</div>
+<table>
+  <tr>
+    <th class="th" style="width:16pt">번호</th>
+    <th class="th" style="width:50pt">성명</th>
+    <th class="th" style="width:60pt">서명</th>
+    <th class="th" style="width:28pt">음주</th>
+    <th class="th" style="width:28pt">체온</th>
+    <th class="th" style="width:28pt">약물</th>
+    <th class="th" style="width:38pt">질병/피로</th>
+    <th class="th" style="width:34pt">안전장비</th>
+    <th class="th">비고</th>
+  </tr>
+  ${wHTML}
+</table>
+<script>window.onload = () => window.print();<\/script>
+</body></html>`);
+  win.document.close();
+}
+</script>
+</body>
+</html>
